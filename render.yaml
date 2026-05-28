@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: tradingview-binance-render-bot
+    runtime: node
+    plan: starter
+    buildCommand: ""
+    startCommand: "npm start"
+    healthCheckPath: /health
+    envVars:
+      - key: BOT_MODE
+        value: dry-run
+      - key: TRADE_ENABLED
+        value: "false"
+      - key: WEBHOOK_SECRET
+        sync: false
+      - key: BINANCE_API_KEY
+        sync: false
+      - key: BINANCE_API_SECRET
+        sync: false
+      - key: RISK_PER_TRADE_PCT
+        value: "1"
+      - key: MAX_DAILY_LOSS_PCT
+        value: "3"
+      - key: MAX_OPEN_TRADES
+        value: "1"
+      - key: STARTING_EQUITY_USDT
+        value: "1000"
+      - key: ALLOWED_SYMBOLS
+        value: BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT
+      - key: LONG_ONLY
+        value: "true"
+      - key: REQUIRE_PROTECTIVE_ORDERS
+        value: "true"
+      - key: PROTECTIVE_ORDERS_ENABLED
+        value: "true"

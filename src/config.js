@@ -1,0 +1,68 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
+function loadDotenv(filePath = path.resolve('.env')) {
+  if (!fs.existsSync(filePath)) return;
+  const raw = fs.readFileSync(filePath, 'utf8');
+  for (const line of raw.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('=')) continue;
+    const [key, ...parts] = trimmed.split('=');
+    const value = parts.join('=').trim().replace(/^["']|["']$/g, '');
+    if (process.env[key.trim()] === undefined) process.env[key.trim()] = value;
+  }
+}
+
+loadDotenv();
+
+function boolFromEnv(value, fallback = false) {
+  if (value === undefined || value === null || value === '') return fallback;
+  return ['1', 'true', 'yes', 'on'].includes(String(value).toLowerCase());
+}
+
+function numberFromEnv(env, name, fallback) {
+  const raw = env[name];
+  if (raw === undefined || raw === '') return fallback;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`${name} debe ser un numero valido`);
+  }
+  return parsed;
+}
+
+function listFromEnv(value) {
+  return String(value || '')
+    .split(',')
+    .map((item) => item.trim().toUpperCase())
+    .filter(Boolean);
+}
+
+export function loadConfig(env = process.env) {
+  const mode = (env.BOT_MODE || 'dry-run').toLowerCase();
+  if (!['dry-run', 'testnet', 'live'].includes(mode)) {
+    throw new Error('BOT_MODE debe ser dry-run, testnet o live');
+  }
+
+  const tradeEnabled = boolFromEnv(env.TRADE_ENABLED, false);
+  if (mode === 'live' && tradeEnabled && env.I_UNDERSTAND_LIVE_RISK !== 'true') {
+    throw new Error('Para operar en vivo define I_UNDERSTAND_LIVE_RISK=true');
+  }
+
+  return {
+    port: Number(env.PORT || 3000),
+    webhookSecret: env.WEBHOOK_SECRET || '',
+    mode,
+    tradeEnabled,
+    binanceApiKey: env.BINANCE_API_KEY || '',
+    binanceApiSecret: env.BINANCE_API_SECRET || '',
+    riskPerTradePct: numberFromEnv(env, 'RISK_PER_TRADE_PCT', 1),
+    maxDailyLossPct: numberFromEnv(env, 'MAX_DAILY_LOSS_PCT', 3),
+    maxOpenTrades: numberFromEnv(env, 'MAX_OPEN_TRADES', 1),
+    startingEquityUsdt: numberFromEnv(env, 'STARTING_EQUITY_USDT', 1000),
+    allowedSymbols: listFromEnv(env.ALLOWED_SYMBOLS || 'BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT'),
+    longOnly: boolFromEnv(env.LONG_ONLY, true),
+    requireProtectiveOrders: boolFromEnv(env.REQUIRE_PROTECTIVE_ORDERS, true),
+    protectiveOrdersEnabled: boolFromEnv(env.PROTECTIVE_ORDERS_ENABLED, true),
+    dataDir: path.resolve(env.DATA_DIR || './data')
+  };
+}

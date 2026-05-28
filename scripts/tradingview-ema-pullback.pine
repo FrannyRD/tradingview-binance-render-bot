@@ -1,0 +1,31 @@
+//@version=5
+strategy("EMA 20/50/200 Pullback Bot", overlay=true, initial_capital=1000, commission_type=strategy.commission.percent, commission_value=0.1)
+
+webhookSecret = input.string("cambia-este-secreto-largo", "Webhook secret")
+riskReward = input.float(2.0, "Risk/Reward", minval=1.0, step=0.25)
+atrLength = input.int(14, "ATR length", minval=1)
+atrStopMult = input.float(1.5, "ATR stop multiplier", minval=0.1, step=0.1)
+
+ema20 = ta.ema(close, 20)
+ema50 = ta.ema(close, 50)
+ema200 = ta.ema(close, 200)
+atr = ta.atr(atrLength)
+
+trendUp = close > ema200 and ema20 > ema50 and ema50 > ema200
+pullbackZone = low <= ema20 or low <= ema50
+bullishRejection = close > open and close > ema20 and (close - low) > (high - close)
+longSignal = trendUp and pullbackZone and bullishRejection
+
+stopLoss = close - atr * atrStopMult
+takeProfit = close + (close - stopLoss) * riskReward
+
+plot(ema20, color=color.new(color.teal, 0), title="EMA 20")
+plot(ema50, color=color.new(color.orange, 0), title="EMA 50")
+plot(ema200, color=color.new(color.blue, 0), title="EMA 200")
+
+if longSignal
+    strategy.entry("Long", strategy.long)
+    strategy.exit("TP/SL", "Long", stop=stopLoss, limit=takeProfit)
+    alert('{"secret":"' + webhookSecret + '","strategy":"EMA_20_50_200_PULLBACK","action":"BUY","symbol":"' + syminfo.ticker + '","timeframe":"' + timeframe.period + '","price":' + str.tostring(close) + ',"stopLoss":' + str.tostring(stopLoss) + ',"takeProfit":' + str.tostring(takeProfit) + '}', alert.freq_once_per_bar_close)
+
+alertcondition(longSignal, title="BUY EMA Pullback", message="Usa la funcion alert() del script para enviar JSON completo.")

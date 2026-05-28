@@ -1,0 +1,16 @@
+{
+  "name": "tradingview-binance-render-bot",
+  "version": "1.0.0",
+  "description": "Bot de trading con webhooks de TradingView, Render y Binance Spot con controles de riesgo.",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
