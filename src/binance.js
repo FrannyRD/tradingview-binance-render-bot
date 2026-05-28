@@ -25,7 +25,7 @@ export class BinanceClient {
   }
 
   async request(method, endpoint, params = {}, signed = false) {
-    this.ensureReady();
+    if (signed) this.ensureReady();
     const query = new URLSearchParams();
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== null && value !== '') query.set(key, String(value));
@@ -40,12 +40,12 @@ export class BinanceClient {
 
     const qs = query.toString();
     const url = `${this.baseUrl}${endpoint}${method === 'GET' && qs ? `?${qs}` : ''}`;
+    const headers = { 'content-type': 'application/x-www-form-urlencoded' };
+    if (this.apiKey) headers['X-MBX-APIKEY'] = this.apiKey;
+
     const response = await fetch(url, {
       method,
-      headers: {
-        'X-MBX-APIKEY': this.apiKey,
-        'content-type': 'application/x-www-form-urlencoded'
-      },
+      headers,
       body: method === 'GET' ? undefined : qs
     });
 
@@ -59,6 +59,10 @@ export class BinanceClient {
 
   async getAccount() {
     return this.request('GET', '/api/v3/account', {}, true);
+  }
+
+  async getKlines({ symbol, interval, limit = 300 }) {
+    return this.request('GET', '/api/v3/klines', { symbol, interval, limit }, false);
   }
 
   async getEquityUsdt(fallbackEquity) {

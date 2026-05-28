@@ -63,6 +63,16 @@ export function loadConfig(env = process.env) {
     longOnly: boolFromEnv(env.LONG_ONLY, true),
     requireProtectiveOrders: boolFromEnv(env.REQUIRE_PROTECTIVE_ORDERS, true),
     protectiveOrdersEnabled: boolFromEnv(env.PROTECTIVE_ORDERS_ENABLED, true),
+    scannerEnabled: boolFromEnv(env.SCANNER_ENABLED, true),
+    scannerSymbols: listFromEnv(env.SCANNER_SYMBOLS || env.ALLOWED_SYMBOLS || 'BTCUSDT'),
+    scannerTimeframe: env.SCANNER_TIMEFRAME || '1h',
+    scannerIntervalSeconds: numberFromEnv(env, 'SCANNER_INTERVAL_SECONDS', 300),
+    scannerLookback: numberFromEnv(env, 'SCANNER_LOOKBACK', 300),
+    scannerUseClosedCandle: boolFromEnv(env.SCANNER_USE_CLOSED_CANDLE, true),
+    scannerRiskReward: numberFromEnv(env, 'SCANNER_RISK_REWARD', 2),
+    scannerMinRiskReward: numberFromEnv(env, 'SCANNER_MIN_RISK_REWARD', 1.5),
+    scannerAtrLength: numberFromEnv(env, 'SCANNER_ATR_LENGTH', 14),
+    scannerAtrStopMult: numberFromEnv(env, 'SCANNER_ATR_STOP_MULT', 1.5),
     dataDir: path.resolve(env.DATA_DIR || './data')
   };
 }

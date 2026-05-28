@@ -33,3 +33,23 @@ services:
         value: "true"
       - key: PROTECTIVE_ORDERS_ENABLED
         value: "true"
+      - key: SCANNER_ENABLED
+        value: "true"
+      - key: SCANNER_SYMBOLS
+        value: BTCUSDT,ETHUSDT,SOLUSDT
+      - key: SCANNER_TIMEFRAME
+        value: 1h
+      - key: SCANNER_INTERVAL_SECONDS
+        value: "300"
+      - key: SCANNER_LOOKBACK
+        value: "300"
+      - key: SCANNER_USE_CLOSED_CANDLE
+        value: "true"
+      - key: SCANNER_RISK_REWARD
+        value: "2"
+      - key: SCANNER_MIN_RISK_REWARD
+        value: "1.5"
+      - key: SCANNER_ATR_LENGTH
+        value: "14"
+      - key: SCANNER_ATR_STOP_MULT
+        value: "1.5"

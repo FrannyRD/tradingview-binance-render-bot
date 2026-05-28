@@ -3,6 +3,7 @@ import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadConfig } from './config.js';
+import { MarketScanner } from './scanner.js';
 import { Store } from './store.js';
 import { handleTradingViewWebhook } from './webhook.js';
 import { jsonResponse, readJsonBody } from './utils.js';
@@ -15,6 +16,7 @@ const publicDir = path.join(rootDir, 'public');
 const config = loadConfig();
 const store = new Store(config.dataDir);
 await store.init(config.startingEquityUsdt);
+const scanner = new MarketScanner({ config, store });
 
 async function serveStatic(res, fileName, contentType) {
   const filePath = path.join(publicDir, fileName);
@@ -32,6 +34,7 @@ const server = http.createServer(async (req, res) => {
         ok: true,
         mode: config.mode,
         tradeEnabled: config.tradeEnabled,
+        scannerEnabled: config.scannerEnabled,
         time: new Date().toISOString()
       });
     }
@@ -56,11 +59,21 @@ const server = http.createServer(async (req, res) => {
           riskPerTradePct: config.riskPerTradePct,
           maxDailyLossPct: config.maxDailyLossPct,
           maxOpenTrades: config.maxOpenTrades,
-          longOnly: config.longOnly
+          longOnly: config.longOnly,
+          scannerEnabled: config.scannerEnabled,
+          scannerSymbols: config.scannerSymbols,
+          scannerTimeframe: config.scannerTimeframe,
+          scannerIntervalSeconds: config.scannerIntervalSeconds,
+          scannerUseClosedCandle: config.scannerUseClosedCandle
         },
         state,
         events
       });
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/scan/run') {
+      const result = await scanner.scanOnce();
+      return jsonResponse(res, 200, { ok: true, result });
     }
 
     if (req.method === 'POST' && url.pathname === '/webhook/tradingview') {
@@ -81,4 +94,6 @@ const server = http.createServer(async (req, res) => {
 server.listen(config.port, () => {
   console.log(`Bot escuchando en http://localhost:${config.port}`);
   console.log(`Modo: ${config.mode} | tradeEnabled: ${config.tradeEnabled}`);
+  console.log(`Scanner: ${config.scannerEnabled ? 'activo' : 'apagado'} | ${config.scannerSymbols.join(',')} ${config.scannerTimeframe}`);
+  scanner.start();
 });

@@ -22,6 +22,9 @@ async function loadStatus() {
     : '<span class="badge warn">apagado</span>';
   $('equity').textContent = `$${money(data.state.equityUsdt)}`;
   $('openTrades').textContent = data.state.openTrades.filter((trade) => trade.status === 'open').length;
+  $('scanner').innerHTML = data.config.scannerEnabled
+    ? '<span class="badge good">activo</span>'
+    : '<span class="badge warn">apagado</span>';
 
   $('config').innerHTML = Object.entries(data.config)
     .map(([key, value]) => `<p><code>${key}</code> ${Array.isArray(value) ? value.join(', ') : value}</p>`)
@@ -37,6 +40,15 @@ async function loadStatus() {
 }
 
 $('refresh').addEventListener('click', loadStatus);
+$('scan').addEventListener('click', async () => {
+  $('scan').disabled = true;
+  try {
+    await fetch('/api/scan/run', { method: 'POST' });
+    await loadStatus();
+  } finally {
+    $('scan').disabled = false;
+  }
+});
 loadStatus().catch((error) => {
   $('events').innerHTML = `<tr><td colspan="3">${error.message}</td></tr>`;
 });

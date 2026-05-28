@@ -19,6 +19,9 @@ export class Store {
         equityUsdt: startingEquityUsdt,
         openTrades: [],
         daily: {},
+        scanner: {
+          lastSignalKeys: {}
+        },
         createdAt: nowIso(),
         updatedAt: nowIso()
       });
@@ -27,7 +30,12 @@ export class Store {
 
   async loadState() {
     const raw = await fs.readFile(this.statePath, 'utf8');
-    return JSON.parse(raw);
+    const state = JSON.parse(raw);
+    state.openTrades ||= [];
+    state.daily ||= {};
+    state.scanner ||= { lastSignalKeys: {} };
+    state.scanner.lastSignalKeys ||= {};
+    return state;
   }
 
   async saveState(state) {
@@ -80,5 +88,14 @@ export class Store {
     });
     await this.saveState(state);
     await this.appendEvent({ type: 'order.created', signal, order, plan });
+  }
+
+  async markScannerSignalIfNew(signalKey) {
+    const state = await this.loadState();
+    if (state.scanner.lastSignalKeys[signalKey]) return false;
+    state.scanner.lastSignalKeys[signalKey] = nowIso();
+    await this.saveState(state);
+    await this.appendEvent({ type: 'scanner.signal.new', signalKey });
+    return true;
   }
 }
