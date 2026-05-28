@@ -36,3 +36,34 @@ test('detecta una senal pullback en tendencia alcista', () => {
   assert.ok(signal.stopLoss < signal.price);
   assert.ok(signal.takeProfit > signal.price);
 });
+
+test('detecta una senal short en tendencia bajista', () => {
+  const candles = Array.from({ length: 230 }, (_, index) => {
+    const close = 400 - index;
+    return {
+      openTime: index * 60_000,
+      open: close + 1,
+      high: close + 3,
+      low: close - 2,
+      close,
+      volume: 100,
+      closeTime: index * 60_000 + 59_999
+    };
+  });
+
+  const last = candles[candles.length - 1];
+  last.open = last.close + 8;
+  last.high = last.close + 35;
+  last.low = last.close - 2;
+
+  const signal = buildEmaPullbackSignal(candles, {
+    symbol: 'BTCUSDT',
+    interval: '15m',
+    riskReward: 2
+  });
+
+  assert.equal(signal.action, 'SELL');
+  assert.equal(signal.symbol, 'BTCUSDT');
+  assert.ok(signal.stopLoss > signal.price);
+  assert.ok(signal.takeProfit < signal.price);
+});

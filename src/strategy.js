@@ -66,7 +66,8 @@ export function buildEmaPullbackSignal(candles, options) {
     riskReward = 2,
     atrLength = 14,
     atrStopMult = 1.5,
-    minRiskReward = 1.5
+    minRiskReward = 1.5,
+    pullbackAtrMult = 0.35
   } = options;
 
   if (candles.length < 220) return null;
@@ -81,29 +82,54 @@ export function buildEmaPullbackSignal(candles, options) {
 
   if (!ema20[i] || !ema50[i] || !ema200[i] || !atrValues[i]) return null;
 
-  const trendUp = candle.close > ema200[i] && ema20[i] > ema50[i] && ema50[i] > ema200[i];
-  const pullbackZone = candle.low <= ema20[i] || candle.low <= ema50[i];
-  const bullishRejection = candle.close > candle.open && candle.close > ema20[i] && (candle.close - candle.low) > (candle.high - candle.close);
+  const atrNow = atrValues[i];
+  const nearEma20 = Math.abs(candle.close - ema20[i]) <= atrNow * pullbackAtrMult || candle.low <= ema20[i] || candle.high >= ema20[i];
+  const nearEma50 = Math.abs(candle.close - ema50[i]) <= atrNow * pullbackAtrMult || candle.low <= ema50[i] || candle.high >= ema50[i];
 
-  if (!trendUp || !pullbackZone || !bullishRejection) return null;
+  const trendUp = candle.close > ema200[i] && ema20[i] > ema50[i];
+  const pullbackLong = nearEma20 || nearEma50;
+  const bullishRejection = candle.close > candle.open && (candle.close - candle.low) > (candle.high - candle.close);
 
-  const stopLoss = candle.close - atrValues[i] * atrStopMult;
-  const takeProfit = candle.close + (candle.close - stopLoss) * riskReward;
-  const rewardRisk = (takeProfit - candle.close) / (candle.close - stopLoss);
+  const trendDown = candle.close < ema200[i] && ema20[i] < ema50[i];
+  const pullbackShort = nearEma20 || nearEma50;
+  const bearishRejection = candle.close < candle.open && (candle.high - candle.close) > (candle.close - candle.low);
+
+  let action = null;
+  let stopLoss = null;
+  let takeProfit = null;
+  let setup = null;
+
+  if (trendUp && pullbackLong && bullishRejection) {
+    action = 'BUY';
+    stopLoss = candle.close - atrNow * atrStopMult;
+    takeProfit = candle.close + (candle.close - stopLoss) * riskReward;
+    setup = 'long pullback';
+  } else if (trendDown && pullbackShort && bearishRejection) {
+    action = 'SELL';
+    stopLoss = candle.close + atrNow * atrStopMult;
+    takeProfit = candle.close - (stopLoss - candle.close) * riskReward;
+    setup = 'short pullback';
+  }
+
+  if (!action) return null;
+
+  const risk = Math.abs(candle.close - stopLoss);
+  const reward = Math.abs(takeProfit - candle.close);
+  const rewardRisk = reward / risk;
 
   if (!Number.isFinite(stopLoss) || !Number.isFinite(takeProfit) || rewardRisk < minRiskReward) {
     return null;
   }
 
   return {
-    strategy: 'EMA_20_50_200_PULLBACK_SCANNER',
-    action: 'BUY',
+    strategy: 'EMA_20_50_200_PULLBACK_LONG_SHORT',
+    action,
     symbol,
     timeframe: interval,
     price: candle.close,
     stopLoss,
     takeProfit,
-    note: `scanner candle ${new Date(candle.closeTime).toISOString()}`,
-    signalKey: `${symbol}:${interval}:${candle.closeTime}`
+    note: `${setup} scanner candle ${new Date(candle.closeTime).toISOString()}`,
+    signalKey: `${symbol}:${interval}:${candle.closeTime}:${action}`
   };
 }

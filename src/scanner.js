@@ -66,7 +66,8 @@ export class MarketScanner {
       riskReward: this.config.scannerRiskReward,
       atrLength: this.config.scannerAtrLength,
       atrStopMult: this.config.scannerAtrStopMult,
-      minRiskReward: this.config.scannerMinRiskReward
+      minRiskReward: this.config.scannerMinRiskReward,
+      pullbackAtrMult: this.config.scannerPullbackAtrMult
     });
 
     if (!signal) {

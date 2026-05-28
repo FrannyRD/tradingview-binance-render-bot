@@ -11,6 +11,10 @@ services:
         value: dry-run
       - key: TRADE_ENABLED
         value: "false"
+      - key: EXECUTION_MARKET
+        value: futures
+      - key: FUTURES_LEVERAGE
+        value: "1"
       - key: WEBHOOK_SECRET
         sync: false
       - key: BINANCE_API_KEY
@@ -18,7 +22,7 @@ services:
       - key: BINANCE_API_SECRET
         sync: false
       - key: RISK_PER_TRADE_PCT
-        value: "0.5"
+        value: "0.25"
       - key: MAX_DAILY_LOSS_PCT
         value: "3"
       - key: MAX_OPEN_TRADES
@@ -30,7 +34,7 @@ services:
       - key: ALLOWED_SYMBOLS
         value: BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT,XRPUSDT,ADAUSDT,DOGEUSDT,AVAXUSDT,LINKUSDT,LTCUSDT,DOTUSDT,TRXUSDT
       - key: LONG_ONLY
-        value: "true"
+        value: "false"
       - key: REQUIRE_PROTECTIVE_ORDERS
         value: "true"
       - key: PROTECTIVE_ORDERS_ENABLED
@@ -40,9 +44,9 @@ services:
       - key: SCANNER_SYMBOLS
         value: BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT,XRPUSDT,ADAUSDT,DOGEUSDT,AVAXUSDT,LINKUSDT,LTCUSDT,DOTUSDT,TRXUSDT
       - key: SCANNER_TIMEFRAME
-        value: 1h
+        value: 15m
       - key: SCANNER_INTERVAL_SECONDS
-        value: "300"
+        value: "60"
       - key: SCANNER_LOOKBACK
         value: "300"
       - key: SCANNER_USE_CLOSED_CANDLE
@@ -55,3 +59,5 @@ services:
         value: "14"
       - key: SCANNER_ATR_STOP_MULT
         value: "1.5"
+      - key: SCANNER_PULLBACK_ATR_MULT
+        value: "0.35"

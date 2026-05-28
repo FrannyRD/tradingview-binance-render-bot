@@ -113,6 +113,8 @@ async function loadStatus() {
 
   renderKeyValue('riskConfig', [
     ['Riesgo por trade', `${data.config.riskPerTradePct}%`],
+    ['Mercado', data.config.executionMarket],
+    ['Apalancamiento', `${data.config.futuresLeverage}x`],
     ['Max abiertas', data.config.maxOpenTrades],
     ['Max por dia', data.config.maxDailyTrades],
     ['Perdida diaria', `${data.config.maxDailyLossPct}%`],
@@ -124,6 +126,7 @@ async function loadStatus() {
   renderKeyValue('config', [
     ['Modo', data.config.mode],
     ['Trading habilitado', data.config.tradeEnabled ? 'si' : 'no'],
+    ['Mercado ejecucion', data.config.executionMarket],
     ['Scanner habilitado', data.config.scannerEnabled ? 'si' : 'no'],
     ['Intervalo', `${data.config.scannerIntervalSeconds}s`],
     ['Simbolos permitidos', data.config.allowedSymbols.join(', ')]

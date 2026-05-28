@@ -13,6 +13,7 @@ Bot de trading Spot para Render y Binance. Puede trabajar sin TradingView: consu
 - Webhook opcional `POST /webhook/tradingview`
 - Dashboard `GET /dashboard`
 - Modo `dry-run`, `demo`, `testnet` y `live`
+- Ejecucion en Futures demo para poder operar compras y ventas/shorts
 - Calculo de posicion por porcentaje de riesgo
 - Limite de perdida diaria
 - Limite de operaciones abiertas
@@ -31,7 +32,7 @@ Render scanner
   -> consulta velas publicas de Binance
   -> evalua EMA 20/50/200 + pullback + vela de rechazo
   -> valida simbolo, stop loss, take profit y riesgo
-  -> dry-run, Binance Spot Testnet o Binance Live
+  -> dry-run, Binance Demo Futures, Binance Testnet o Binance Live
   -> dashboard con eventos
 ```
 
@@ -60,24 +61,27 @@ node src/server.js
 ```env
 BOT_MODE=dry-run
 TRADE_ENABLED=false
-RISK_PER_TRADE_PCT=0.5
+EXECUTION_MARKET=futures
+FUTURES_LEVERAGE=1
+RISK_PER_TRADE_PCT=0.25
 MAX_DAILY_LOSS_PCT=3
 MAX_OPEN_TRADES=3
 MAX_DAILY_TRADES=6
 ALLOWED_SYMBOLS=BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT,XRPUSDT,ADAUSDT,DOGEUSDT,AVAXUSDT,LINKUSDT,LTCUSDT,DOTUSDT,TRXUSDT
-LONG_ONLY=true
+LONG_ONLY=false
 REQUIRE_PROTECTIVE_ORDERS=true
 PROTECTIVE_ORDERS_ENABLED=true
 SCANNER_ENABLED=true
 SCANNER_SYMBOLS=BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT,XRPUSDT,ADAUSDT,DOGEUSDT,AVAXUSDT,LINKUSDT,LTCUSDT,DOTUSDT,TRXUSDT
-SCANNER_TIMEFRAME=1h
-SCANNER_INTERVAL_SECONDS=300
+SCANNER_TIMEFRAME=15m
+SCANNER_INTERVAL_SECONDS=60
 SCANNER_LOOKBACK=300
 SCANNER_USE_CLOSED_CANDLE=true
 SCANNER_RISK_REWARD=2
 SCANNER_MIN_RISK_REWARD=1.5
 SCANNER_ATR_LENGTH=14
 SCANNER_ATR_STOP_MULT=1.5
+SCANNER_PULLBACK_ATR_MULT=0.35
 ```
 
 ## Render
@@ -121,6 +125,8 @@ Luego usa Binance Demo Trading:
 ```env
 BOT_MODE=demo
 TRADE_ENABLED=true
+EXECUTION_MARKET=futures
+FUTURES_LEVERAGE=1
 BINANCE_API_KEY=tu_key_demo
 BINANCE_API_SECRET=tu_secret_demo
 ```
@@ -135,6 +141,19 @@ MAX_OPEN_TRADES=3
 MAX_DAILY_TRADES=6
 MAX_DAILY_LOSS_PCT=3
 ```
+
+Para una version mas activa pero prudente, usa:
+
+```env
+SCANNER_TIMEFRAME=15m
+SCANNER_INTERVAL_SECONDS=60
+RISK_PER_TRADE_PCT=0.25
+LONG_ONLY=false
+EXECUTION_MARKET=futures
+FUTURES_LEVERAGE=1
+```
+
+Las senales `BUY` abren largos y las senales `SELL` abren shorts en Futures. En Spot una venta no es short; por eso el bot bloquea `SELL` si `EXECUTION_MARKET` no es `futures`.
 
 Si usas el Spot Testnet oficial de Binance en `testnet.binance.vision`, usa:
 

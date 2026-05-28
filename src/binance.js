@@ -7,6 +7,12 @@ const BASE_URLS = {
   live: 'https://api.binance.com'
 };
 
+const FUTURES_BASE_URLS = {
+  testnet: 'https://testnet.binancefuture.com',
+  demo: 'https://demo-fapi.binance.com',
+  live: 'https://fapi.binance.com'
+};
+
 export class BinanceClient {
   constructor({ apiKey, apiSecret, mode }) {
     this.apiKey = apiKey;
@@ -117,5 +123,72 @@ export class BinanceClient {
       belowTimeInForce: 'GTC',
       listClientOrderId: `oco_${Date.now()}`
     }, true);
+  }
+}
+
+export class BinanceFuturesClient extends BinanceClient {
+  constructor({ apiKey, apiSecret, mode }) {
+    super({ apiKey, apiSecret, mode });
+    this.baseUrl = FUTURES_BASE_URLS[mode] || FUTURES_BASE_URLS.testnet;
+  }
+
+  async getEquityUsdt(fallbackEquity) {
+    const balances = await this.request('GET', '/fapi/v2/balance', {}, true);
+    const usdt = balances.find((asset) => asset.asset === 'USDT');
+    const available = safeNumber(usdt?.availableBalance, NaN);
+    return Number.isFinite(available) ? available : fallbackEquity;
+  }
+
+  async getSymbolFilters(symbol) {
+    const data = await this.request('GET', '/fapi/v1/exchangeInfo', { symbol }, false);
+    const info = data.symbols?.[0];
+    const lot = info?.filters?.find((filter) => filter.filterType === 'LOT_SIZE');
+    const minNotional = info?.filters?.find((filter) => filter.filterType === 'MIN_NOTIONAL');
+    const priceFilter = info?.filters?.find((filter) => filter.filterType === 'PRICE_FILTER');
+    return {
+      stepSize: lot?.stepSize || '0.001',
+      minQty: lot?.minQty || '0',
+      minNotional: minNotional?.notional || minNotional?.minNotional || '0',
+      tickSize: priceFilter?.tickSize || '0.01'
+    };
+  }
+
+  async setLeverage(symbol, leverage) {
+    return this.request('POST', '/fapi/v1/leverage', { symbol, leverage }, true);
+  }
+
+  async placeMarketOrder(signal, plan) {
+    return this.request('POST', '/fapi/v1/order', {
+      symbol: signal.symbol,
+      side: signal.action,
+      type: 'MARKET',
+      quantity: formatDecimal(plan.quantity),
+      newClientOrderId: `ft_${Date.now()}`
+    }, true);
+  }
+
+  async placeProtection(signal, filters) {
+    const closeSide = signal.action === 'BUY' ? 'SELL' : 'BUY';
+    const stopOrder = await this.request('POST', '/fapi/v1/order', {
+      symbol: signal.symbol,
+      side: closeSide,
+      type: 'STOP_MARKET',
+      stopPrice: formatDecimal(roundDownToStep(signal.stopLoss, filters.tickSize)),
+      closePosition: 'true',
+      workingType: 'MARK_PRICE',
+      newClientOrderId: `sl_${Date.now()}`
+    }, true);
+
+    const takeProfitOrder = await this.request('POST', '/fapi/v1/order', {
+      symbol: signal.symbol,
+      side: closeSide,
+      type: 'TAKE_PROFIT_MARKET',
+      stopPrice: formatDecimal(roundDownToStep(signal.takeProfit, filters.tickSize)),
+      closePosition: 'true',
+      workingType: 'MARK_PRICE',
+      newClientOrderId: `tp_${Date.now()}`
+    }, true);
+
+    return { stopOrder, takeProfitOrder };
   }
 }

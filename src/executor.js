@@ -1,4 +1,4 @@
-import { BinanceClient } from './binance.js';
+import { BinanceClient, BinanceFuturesClient } from './binance.js';
 import { calculateTradePlan, checkCircuitBreakers, validateSignal } from './risk.js';
 
 export async function executeSignal({ signal, config, store, source = 'unknown' }) {
@@ -15,7 +15,14 @@ export async function executeSignal({ signal, config, store, source = 'unknown' 
     return { statusCode: 409, body: { ok: false, error: breakerError } };
   }
 
-  const binance = new BinanceClient({
+  if (signal.action === 'SELL' && config.executionMarket !== 'futures') {
+    const error = 'SELL como short requiere EXECUTION_MARKET=futures';
+    await store.recordRejectedSignal(signal, error);
+    return { statusCode: 400, body: { ok: false, error } };
+  }
+
+  const Client = config.executionMarket === 'futures' ? BinanceFuturesClient : BinanceClient;
+  const binance = new Client({
     apiKey: config.binanceApiKey,
     apiSecret: config.binanceApiSecret,
     mode: config.mode === 'live' ? 'live' : config.mode === 'demo' ? 'demo' : 'testnet'
@@ -43,10 +50,16 @@ export async function executeSignal({ signal, config, store, source = 'unknown' 
     return { statusCode: 202, body: { ok: true, result } };
   }
 
+  if (config.executionMarket === 'futures' && config.futuresLeverage) {
+    await binance.setLeverage(signal.symbol, config.futuresLeverage);
+  }
+
   const order = await binance.placeMarketOrder(signal, plan);
   let protection = null;
   if (config.protectiveOrdersEnabled) {
-    protection = await binance.placeOcoProtection(signal, plan, filters);
+    protection = config.executionMarket === 'futures'
+      ? await binance.placeProtection(signal, filters)
+      : await binance.placeOcoProtection(signal, plan, filters);
   }
 
   await store.recordOrder(signal, { ...order, protection }, plan);

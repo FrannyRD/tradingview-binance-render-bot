@@ -55,6 +55,8 @@ const server = http.createServer(async (req, res) => {
         config: {
           mode: config.mode,
           tradeEnabled: config.tradeEnabled,
+          executionMarket: config.executionMarket,
+          futuresLeverage: config.futuresLeverage,
           allowedSymbols: config.allowedSymbols,
           riskPerTradePct: config.riskPerTradePct,
           maxDailyLossPct: config.maxDailyLossPct,
