@@ -18,7 +18,7 @@ export async function executeSignal({ signal, config, store, source = 'unknown' 
   const binance = new BinanceClient({
     apiKey: config.binanceApiKey,
     apiSecret: config.binanceApiSecret,
-    mode: config.mode === 'live' ? 'live' : 'testnet'
+    mode: config.mode === 'live' ? 'live' : config.mode === 'demo' ? 'demo' : 'testnet'
   });
 
   const filters = config.tradeEnabled && config.mode !== 'dry-run'

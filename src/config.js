@@ -41,8 +41,8 @@ const defaultSymbols = 'BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT,XRPUSDT,ADAUSDT,DOGEUSDT
 
 export function loadConfig(env = process.env) {
   const mode = (env.BOT_MODE || 'dry-run').toLowerCase();
-  if (!['dry-run', 'testnet', 'live'].includes(mode)) {
-    throw new Error('BOT_MODE debe ser dry-run, testnet o live');
+  if (!['dry-run', 'testnet', 'demo', 'live'].includes(mode)) {
+    throw new Error('BOT_MODE debe ser dry-run, testnet, demo o live');
   }
 
   const tradeEnabled = boolFromEnv(env.TRADE_ENABLED, false);

@@ -3,6 +3,7 @@ import { formatDecimal, roundDownToStep, safeNumber } from './utils.js';
 
 const BASE_URLS = {
   testnet: 'https://testnet.binance.vision',
+  demo: 'https://demo-api.binance.com',
   live: 'https://api.binance.com'
 };
 

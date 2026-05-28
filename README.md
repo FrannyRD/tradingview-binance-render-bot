@@ -12,7 +12,7 @@ Bot de trading Spot para Render y Binance. Puede trabajar sin TradingView: consu
 - API `POST /api/scan/run` para disparar una revision
 - Webhook opcional `POST /webhook/tradingview`
 - Dashboard `GET /dashboard`
-- Modo `dry-run`, `testnet` y `live`
+- Modo `dry-run`, `demo`, `testnet` y `live`
 - Calculo de posicion por porcentaje de riesgo
 - Limite de perdida diaria
 - Limite de operaciones abiertas
@@ -116,24 +116,33 @@ BOT_MODE=dry-run
 TRADE_ENABLED=false
 ```
 
-Luego usa Spot Testnet:
+Luego usa Binance Demo Trading:
+
+```env
+BOT_MODE=demo
+TRADE_ENABLED=true
+BINANCE_API_KEY=tu_key_demo
+BINANCE_API_SECRET=tu_secret_demo
+```
+
+Mi configuracion sugerida para demo:
+
+```env
+BOT_MODE=demo
+TRADE_ENABLED=true
+RISK_PER_TRADE_PCT=0.5
+MAX_OPEN_TRADES=3
+MAX_DAILY_TRADES=6
+MAX_DAILY_LOSS_PCT=3
+```
+
+Si usas el Spot Testnet oficial de Binance en `testnet.binance.vision`, usa:
 
 ```env
 BOT_MODE=testnet
 TRADE_ENABLED=true
 BINANCE_API_KEY=tu_key_testnet
 BINANCE_API_SECRET=tu_secret_testnet
-```
-
-Mi configuracion sugerida para demo:
-
-```env
-BOT_MODE=testnet
-TRADE_ENABLED=true
-RISK_PER_TRADE_PCT=0.5
-MAX_OPEN_TRADES=3
-MAX_DAILY_TRADES=6
-MAX_DAILY_LOSS_PCT=3
 ```
 
 Con esto el bot puede abrir mas de una operacion, pero mantiene un techo razonable: maximo 3 abiertas al mismo tiempo y 6 intentos por dia. Si el rendimiento en demo es estable durante varias semanas, se puede subir gradualmente. No recomiendo empezar con 15 o 30 trades diarios porque una mala condicion de mercado puede llenar la cuenta de entradas mediocres.
