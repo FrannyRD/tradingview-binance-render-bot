@@ -8,6 +8,7 @@ Bot de trading Spot para Render y Binance. Puede trabajar sin TradingView: consu
 
 - Scanner automatico de mercado desde Binance
 - Boton manual `Escanear` en el dashboard
+- Dashboard con resumen de salud, ultimo escaneo, simbolos, eventos, riesgo y operaciones abiertas
 - API `POST /api/scan/run` para disparar una revision
 - Webhook opcional `POST /webhook/tradingview`
 - Dashboard `GET /dashboard`
@@ -15,6 +16,7 @@ Bot de trading Spot para Render y Binance. Puede trabajar sin TradingView: consu
 - Calculo de posicion por porcentaje de riesgo
 - Limite de perdida diaria
 - Limite de operaciones abiertas
+- Limite maximo de operaciones por dia
 - Lista de simbolos permitidos
 - Modo solo long por defecto
 - Orden market en Binance Spot
@@ -58,15 +60,16 @@ node src/server.js
 ```env
 BOT_MODE=dry-run
 TRADE_ENABLED=false
-RISK_PER_TRADE_PCT=1
+RISK_PER_TRADE_PCT=0.5
 MAX_DAILY_LOSS_PCT=3
-MAX_OPEN_TRADES=1
-ALLOWED_SYMBOLS=BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT
+MAX_OPEN_TRADES=3
+MAX_DAILY_TRADES=6
+ALLOWED_SYMBOLS=BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT,XRPUSDT,ADAUSDT,DOGEUSDT,AVAXUSDT,LINKUSDT,LTCUSDT,DOTUSDT,TRXUSDT
 LONG_ONLY=true
 REQUIRE_PROTECTIVE_ORDERS=true
 PROTECTIVE_ORDERS_ENABLED=true
 SCANNER_ENABLED=true
-SCANNER_SYMBOLS=BTCUSDT,ETHUSDT,SOLUSDT
+SCANNER_SYMBOLS=BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT,XRPUSDT,ADAUSDT,DOGEUSDT,AVAXUSDT,LINKUSDT,LTCUSDT,DOTUSDT,TRXUSDT
 SCANNER_TIMEFRAME=1h
 SCANNER_INTERVAL_SECONDS=300
 SCANNER_LOOKBACK=300
@@ -121,6 +124,19 @@ TRADE_ENABLED=true
 BINANCE_API_KEY=tu_key_testnet
 BINANCE_API_SECRET=tu_secret_testnet
 ```
+
+Mi configuracion sugerida para demo:
+
+```env
+BOT_MODE=testnet
+TRADE_ENABLED=true
+RISK_PER_TRADE_PCT=0.5
+MAX_OPEN_TRADES=3
+MAX_DAILY_TRADES=6
+MAX_DAILY_LOSS_PCT=3
+```
+
+Con esto el bot puede abrir mas de una operacion, pero mantiene un techo razonable: maximo 3 abiertas al mismo tiempo y 6 intentos por dia. Si el rendimiento en demo es estable durante varias semanas, se puede subir gradualmente. No recomiendo empezar con 15 o 30 trades diarios porque una mala condicion de mercado puede llenar la cuenta de entradas mediocres.
 
 Para live, ademas de cambiar claves reales:
 

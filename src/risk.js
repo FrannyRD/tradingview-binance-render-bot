@@ -87,6 +87,11 @@ export function checkCircuitBreakers({ state, config }) {
 
   const today = new Date().toISOString().slice(0, 10);
   const daily = state.daily[today] || { realizedPnlUsdt: 0 };
+  const dailyOrders = daily.orders || 0;
+  if (dailyOrders >= config.maxDailyTrades) {
+    return `Maximo de operaciones diarias alcanzado: ${dailyOrders}`;
+  }
+
   const maxDailyLossUsdt = state.equityUsdt * (config.maxDailyLossPct / 100);
   if (daily.realizedPnlUsdt <= -maxDailyLossUsdt) {
     return `Limite de perdida diaria alcanzado: ${daily.realizedPnlUsdt}`;

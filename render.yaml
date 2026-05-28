@@ -18,15 +18,17 @@ services:
       - key: BINANCE_API_SECRET
         sync: false
       - key: RISK_PER_TRADE_PCT
-        value: "1"
+        value: "0.5"
       - key: MAX_DAILY_LOSS_PCT
         value: "3"
       - key: MAX_OPEN_TRADES
-        value: "1"
+        value: "3"
+      - key: MAX_DAILY_TRADES
+        value: "6"
       - key: STARTING_EQUITY_USDT
         value: "1000"
       - key: ALLOWED_SYMBOLS
-        value: BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT
+        value: BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT,XRPUSDT,ADAUSDT,DOGEUSDT,AVAXUSDT,LINKUSDT,LTCUSDT,DOTUSDT,TRXUSDT
       - key: LONG_ONLY
         value: "true"
       - key: REQUIRE_PROTECTIVE_ORDERS
@@ -36,7 +38,7 @@ services:
       - key: SCANNER_ENABLED
         value: "true"
       - key: SCANNER_SYMBOLS
-        value: BTCUSDT,ETHUSDT,SOLUSDT
+        value: BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT,XRPUSDT,ADAUSDT,DOGEUSDT,AVAXUSDT,LINKUSDT,LTCUSDT,DOTUSDT,TRXUSDT
       - key: SCANNER_TIMEFRAME
         value: 1h
       - key: SCANNER_INTERVAL_SECONDS

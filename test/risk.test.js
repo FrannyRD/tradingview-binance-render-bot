@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calculateTradePlan, normalizeSignal, validateSignal } from '../src/risk.js';
+import { calculateTradePlan, checkCircuitBreakers, normalizeSignal, validateSignal } from '../src/risk.js';
 
 const config = {
   allowedSymbols: ['BTCUSDT'],
@@ -54,4 +54,22 @@ test('calcula cantidad por riesgo de 1%', () => {
   assert.equal(plan.maxRiskUsdt, 10);
   assert.equal(plan.quantity, 2);
   assert.equal(plan.riskReward, 2);
+});
+
+test('bloquea cuando alcanza el maximo diario de trades', () => {
+  const state = {
+    equityUsdt: 1000,
+    openTrades: [],
+    daily: {
+      [new Date().toISOString().slice(0, 10)]: {
+        realizedPnlUsdt: 0,
+        orders: 6
+      }
+    }
+  };
+
+  assert.match(
+    checkCircuitBreakers({ state, config: { ...config, maxOpenTrades: 3, maxDailyTrades: 6, maxDailyLossPct: 3 } }),
+    /Maximo de operaciones diarias/
+  );
 });

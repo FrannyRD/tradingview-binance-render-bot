@@ -37,6 +37,8 @@ function listFromEnv(value) {
     .filter(Boolean);
 }
 
+const defaultSymbols = 'BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT,XRPUSDT,ADAUSDT,DOGEUSDT,AVAXUSDT,LINKUSDT,LTCUSDT,DOTUSDT,TRXUSDT';
+
 export function loadConfig(env = process.env) {
   const mode = (env.BOT_MODE || 'dry-run').toLowerCase();
   if (!['dry-run', 'testnet', 'live'].includes(mode)) {
@@ -55,16 +57,17 @@ export function loadConfig(env = process.env) {
     tradeEnabled,
     binanceApiKey: env.BINANCE_API_KEY || '',
     binanceApiSecret: env.BINANCE_API_SECRET || '',
-    riskPerTradePct: numberFromEnv(env, 'RISK_PER_TRADE_PCT', 1),
+    riskPerTradePct: numberFromEnv(env, 'RISK_PER_TRADE_PCT', 0.5),
     maxDailyLossPct: numberFromEnv(env, 'MAX_DAILY_LOSS_PCT', 3),
-    maxOpenTrades: numberFromEnv(env, 'MAX_OPEN_TRADES', 1),
+    maxOpenTrades: numberFromEnv(env, 'MAX_OPEN_TRADES', 3),
+    maxDailyTrades: numberFromEnv(env, 'MAX_DAILY_TRADES', 6),
     startingEquityUsdt: numberFromEnv(env, 'STARTING_EQUITY_USDT', 1000),
-    allowedSymbols: listFromEnv(env.ALLOWED_SYMBOLS || 'BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT'),
+    allowedSymbols: listFromEnv(env.ALLOWED_SYMBOLS || defaultSymbols),
     longOnly: boolFromEnv(env.LONG_ONLY, true),
     requireProtectiveOrders: boolFromEnv(env.REQUIRE_PROTECTIVE_ORDERS, true),
     protectiveOrdersEnabled: boolFromEnv(env.PROTECTIVE_ORDERS_ENABLED, true),
     scannerEnabled: boolFromEnv(env.SCANNER_ENABLED, true),
-    scannerSymbols: listFromEnv(env.SCANNER_SYMBOLS || env.ALLOWED_SYMBOLS || 'BTCUSDT'),
+    scannerSymbols: listFromEnv(env.SCANNER_SYMBOLS || env.ALLOWED_SYMBOLS || defaultSymbols),
     scannerTimeframe: env.SCANNER_TIMEFRAME || '1h',
     scannerIntervalSeconds: numberFromEnv(env, 'SCANNER_INTERVAL_SECONDS', 300),
     scannerLookback: numberFromEnv(env, 'SCANNER_LOOKBACK', 300),

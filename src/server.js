@@ -49,7 +49,7 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'GET' && url.pathname === '/api/status') {
       const state = await store.loadState();
-      const events = await store.listEvents(50);
+      const events = await store.listEvents(200);
       return jsonResponse(res, 200, {
         ok: true,
         config: {
@@ -59,6 +59,7 @@ const server = http.createServer(async (req, res) => {
           riskPerTradePct: config.riskPerTradePct,
           maxDailyLossPct: config.maxDailyLossPct,
           maxOpenTrades: config.maxOpenTrades,
+          maxDailyTrades: config.maxDailyTrades,
           longOnly: config.longOnly,
           scannerEnabled: config.scannerEnabled,
           scannerSymbols: config.scannerSymbols,

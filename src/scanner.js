@@ -59,6 +59,7 @@ export class MarketScanner {
     });
     const candles = rawKlines.map(parseKline);
     const usableCandles = this.config.scannerUseClosedCandle ? candles.slice(0, -1) : candles;
+    const lastCandle = usableCandles[usableCandles.length - 1];
     const signal = buildEmaPullbackSignal(usableCandles, {
       symbol,
       interval: this.config.scannerTimeframe,
@@ -69,7 +70,13 @@ export class MarketScanner {
     });
 
     if (!signal) {
-      return { symbol, signal: false };
+      return {
+        symbol,
+        signal: false,
+        price: lastCandle?.close ?? null,
+        candleTime: lastCandle?.closeTime ? new Date(lastCandle.closeTime).toISOString() : null,
+        note: 'Sin setup valido'
+      };
     }
 
     const isNew = await this.store.markScannerSignalIfNew(signal.signalKey);
