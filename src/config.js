@@ -63,6 +63,8 @@ export function loadConfig(env = process.env) {
     maxDailyLossPct: numberFromEnv(env, 'MAX_DAILY_LOSS_PCT', 3),
     maxOpenTrades: numberFromEnv(env, 'MAX_OPEN_TRADES', 3),
     maxDailyTrades: numberFromEnv(env, 'MAX_DAILY_TRADES', 6),
+    tradeCooldownMinutes: numberFromEnv(env, 'TRADE_COOLDOWN_MINUTES', 120),
+    blockSymbolWhenPositionOpen: boolFromEnv(env.BLOCK_SYMBOL_WHEN_POSITION_OPEN, true),
     startingEquityUsdt: numberFromEnv(env, 'STARTING_EQUITY_USDT', 1000),
     allowedSymbols: listFromEnv(env.ALLOWED_SYMBOLS || defaultSymbols),
     longOnly: boolFromEnv(env.LONG_ONLY, false),

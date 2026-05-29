@@ -22,6 +22,7 @@ export class Store {
         scanner: {
           lastSignalKeys: {}
         },
+        lastTradeAtBySymbol: {},
         createdAt: nowIso(),
         updatedAt: nowIso()
       });
@@ -33,6 +34,7 @@ export class Store {
     const state = JSON.parse(raw);
     state.openTrades ||= [];
     state.daily ||= {};
+    state.lastTradeAtBySymbol ||= {};
     state.scanner ||= { lastSignalKeys: {} };
     state.scanner.lastSignalKeys ||= {};
     return state;
@@ -74,6 +76,8 @@ export class Store {
     const key = todayKey();
     state.daily[key] ||= { realizedPnlUsdt: 0, orders: 0 };
     state.daily[key].orders += 1;
+    state.lastTradeAtBySymbol ||= {};
+    state.lastTradeAtBySymbol[signal.symbol] = nowIso();
     state.openTrades.push({
       id: order.clientOrderId || order.orderId || crypto.randomUUID(),
       symbol: signal.symbol,

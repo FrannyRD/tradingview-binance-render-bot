@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calculateTradePlan, checkCircuitBreakers, normalizeSignal, validateSignal } from '../src/risk.js';
+import { calculateTradePlan, checkCircuitBreakers, checkSymbolCooldown, normalizeSignal, validateSignal } from '../src/risk.js';
 
 const config = {
   allowedSymbols: ['BTCUSDT'],
@@ -71,5 +71,18 @@ test('bloquea cuando alcanza el maximo diario de trades', () => {
   assert.match(
     checkCircuitBreakers({ state, config: { ...config, maxOpenTrades: 3, maxDailyTrades: 6, maxDailyLossPct: 3 } }),
     /Maximo de operaciones diarias/
+  );
+});
+
+test('bloquea si el simbolo esta en cooldown', () => {
+  const state = {
+    lastTradeAtBySymbol: {
+      BTCUSDT: new Date(Date.now() - 30 * 60 * 1000).toISOString()
+    }
+  };
+
+  assert.match(
+    checkSymbolCooldown({ state, config: { tradeCooldownMinutes: 120 }, symbol: 'BTCUSDT' }),
+    /Cooldown activo/
   );
 });

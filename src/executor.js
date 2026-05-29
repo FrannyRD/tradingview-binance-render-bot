@@ -1,18 +1,11 @@
 import { BinanceClient, BinanceFuturesClient } from './binance.js';
-import { calculateTradePlan, checkCircuitBreakers, validateSignal } from './risk.js';
+import { calculateTradePlan, checkCircuitBreakers, checkSymbolCooldown, validateSignal } from './risk.js';
 
 export async function executeSignal({ signal, config, store, source = 'unknown' }) {
   const validationError = validateSignal(signal, config);
   if (validationError) {
     await store.recordRejectedSignal(signal, validationError);
     return { statusCode: 400, body: { ok: false, error: validationError } };
-  }
-
-  const state = await store.loadState();
-  const breakerError = checkCircuitBreakers({ state, config });
-  if (breakerError) {
-    await store.recordRejectedSignal(signal, breakerError);
-    return { statusCode: 409, body: { ok: false, error: breakerError } };
   }
 
   if (signal.action === 'SELL' && config.executionMarket !== 'futures') {
@@ -27,6 +20,41 @@ export async function executeSignal({ signal, config, store, source = 'unknown' 
     apiSecret: config.binanceApiSecret,
     mode: config.mode === 'live' ? 'live' : config.mode === 'demo' ? 'demo' : 'testnet'
   });
+
+  const state = await store.loadState();
+  let openFuturesPositions = null;
+  if (config.tradeEnabled && config.mode !== 'dry-run' && config.executionMarket === 'futures') {
+    openFuturesPositions = await binance.getOpenPositions();
+  }
+
+  const breakerState = openFuturesPositions
+    ? {
+      ...state,
+      openTrades: openFuturesPositions.map((position) => ({
+        symbol: position.symbol,
+        status: 'open',
+        side: Number(position.positionAmt) < 0 ? 'SELL' : 'BUY'
+      }))
+    }
+    : state;
+
+  const breakerError = checkCircuitBreakers({ state: breakerState, config });
+  if (breakerError) {
+    await store.recordRejectedSignal(signal, breakerError);
+    return { statusCode: 409, body: { ok: false, error: breakerError } };
+  }
+
+  const cooldownError = checkSymbolCooldown({ state, config, symbol: signal.symbol });
+  if (cooldownError) {
+    await store.recordRejectedSignal(signal, cooldownError);
+    return { statusCode: 409, body: { ok: false, error: cooldownError } };
+  }
+
+  if (config.blockSymbolWhenPositionOpen && openFuturesPositions?.some((position) => position.symbol === signal.symbol)) {
+    const error = `Ya hay una posicion abierta en ${signal.symbol}; no se abre otra hasta que cierre`;
+    await store.recordRejectedSignal(signal, error);
+    return { statusCode: 409, body: { ok: false, error } };
+  }
 
   const filters = config.tradeEnabled && config.mode !== 'dry-run'
     ? await binance.getSymbolFilters(signal.symbol)

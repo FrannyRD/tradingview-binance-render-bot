@@ -191,6 +191,8 @@ async function loadStatus() {
     ['Apalancamiento', `${data.config.futuresLeverage}x`],
     ['Max abiertas', data.config.maxOpenTrades],
     ['Max por dia', data.config.maxDailyTrades],
+    ['Cooldown simbolo', `${data.config.tradeCooldownMinutes || 0} min`],
+    ['Bloquear duplicadas', data.config.blockSymbolWhenPositionOpen ? 'si' : 'no'],
     ['Perdida diaria', `${data.config.maxDailyLossPct}%`],
     ['Solo long', data.config.longOnly ? 'si' : 'no'],
     ['Timeframe', data.config.scannerTimeframe],

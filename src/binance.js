@@ -143,6 +143,11 @@ export class BinanceFuturesClient extends BinanceClient {
     return this.request('GET', '/fapi/v2/account', {}, true);
   }
 
+  async getOpenPositions() {
+    const account = await this.getFuturesAccount();
+    return (account.positions || []).filter((position) => Math.abs(safeNumber(position.positionAmt, 0)) > 0);
+  }
+
   async getIncomeHistory(params = {}) {
     return this.request('GET', '/fapi/v1/income', {
       limit: 200,

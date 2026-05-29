@@ -67,6 +67,8 @@ RISK_PER_TRADE_PCT=0.25
 MAX_DAILY_LOSS_PCT=3
 MAX_OPEN_TRADES=3
 MAX_DAILY_TRADES=6
+TRADE_COOLDOWN_MINUTES=120
+BLOCK_SYMBOL_WHEN_POSITION_OPEN=true
 ALLOWED_SYMBOLS=BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT,XRPUSDT,ADAUSDT,DOGEUSDT,AVAXUSDT,LINKUSDT,LTCUSDT,DOTUSDT,TRXUSDT
 LONG_ONLY=false
 REQUIRE_PROTECTIVE_ORDERS=true
@@ -148,6 +150,8 @@ Para una version mas activa pero prudente, usa:
 SCANNER_TIMEFRAME=15m
 SCANNER_INTERVAL_SECONDS=60
 RISK_PER_TRADE_PCT=0.25
+TRADE_COOLDOWN_MINUTES=120
+BLOCK_SYMBOL_WHEN_POSITION_OPEN=true
 LONG_ONLY=false
 EXECUTION_MARKET=futures
 FUTURES_LEVERAGE=1
@@ -175,7 +179,7 @@ BINANCE_API_KEY=tu_key_testnet
 BINANCE_API_SECRET=tu_secret_testnet
 ```
 
-Con esto el bot puede abrir mas de una operacion, pero mantiene un techo razonable: maximo 3 abiertas al mismo tiempo y 6 intentos por dia. Si el rendimiento en demo es estable durante varias semanas, se puede subir gradualmente. No recomiendo empezar con 15 o 30 trades diarios porque una mala condicion de mercado puede llenar la cuenta de entradas mediocres.
+Con esto el bot puede abrir mas de una operacion, pero mantiene un techo razonable: maximo 3 abiertas al mismo tiempo y 6 intentos por dia. Ademas, `BLOCK_SYMBOL_WHEN_POSITION_OPEN=true` evita que el bot siga agregando entradas en un simbolo que ya tiene posicion abierta, y `TRADE_COOLDOWN_MINUTES=120` obliga a esperar 2 horas antes de volver a operar el mismo simbolo. Si el rendimiento en demo es estable durante varias semanas, se puede subir gradualmente. No recomiendo empezar con 15 o 30 trades diarios porque una mala condicion de mercado puede llenar la cuenta de entradas mediocres.
 
 Para live, ademas de cambiar claves reales:
 

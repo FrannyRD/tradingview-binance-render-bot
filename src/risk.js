@@ -99,3 +99,18 @@ export function checkCircuitBreakers({ state, config }) {
 
   return null;
 }
+
+export function checkSymbolCooldown({ state, config, symbol }) {
+  if (!config.tradeCooldownMinutes || config.tradeCooldownMinutes <= 0) return null;
+  const lastTradeAt = state.lastTradeAtBySymbol?.[symbol];
+  if (!lastTradeAt) return null;
+
+  const elapsedMs = Date.now() - new Date(lastTradeAt).getTime();
+  const cooldownMs = config.tradeCooldownMinutes * 60 * 1000;
+  if (elapsedMs < cooldownMs) {
+    const remainingMinutes = Math.ceil((cooldownMs - elapsedMs) / 60000);
+    return `Cooldown activo para ${symbol}: espera ${remainingMinutes} min`;
+  }
+
+  return null;
+}

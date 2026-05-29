@@ -70,6 +70,8 @@ const server = http.createServer(async (req, res) => {
           maxDailyLossPct: config.maxDailyLossPct,
           maxOpenTrades: config.maxOpenTrades,
           maxDailyTrades: config.maxDailyTrades,
+          tradeCooldownMinutes: config.tradeCooldownMinutes,
+          blockSymbolWhenPositionOpen: config.blockSymbolWhenPositionOpen,
           longOnly: config.longOnly,
           scannerEnabled: config.scannerEnabled,
           scannerSymbols: config.scannerSymbols,
