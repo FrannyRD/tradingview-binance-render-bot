@@ -63,20 +63,20 @@ BOT_MODE=dry-run
 TRADE_ENABLED=false
 EXECUTION_MARKET=futures
 FUTURES_LEVERAGE=1
-RISK_PER_TRADE_PCT=0.25
+RISK_PER_TRADE_PCT=0.10
 MAX_DAILY_LOSS_PCT=3
-MAX_OPEN_TRADES=3
-MAX_DAILY_TRADES=6
-TRADE_COOLDOWN_MINUTES=120
+MAX_OPEN_TRADES=1
+MAX_DAILY_TRADES=2
+TRADE_COOLDOWN_MINUTES=240
 BLOCK_SYMBOL_WHEN_POSITION_OPEN=true
-ALLOWED_SYMBOLS=BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT,XRPUSDT,ADAUSDT,DOGEUSDT,AVAXUSDT,LINKUSDT,LTCUSDT,DOTUSDT,TRXUSDT
+ALLOWED_SYMBOLS=BTCUSDT,ETHUSDT
 LONG_ONLY=false
 REQUIRE_PROTECTIVE_ORDERS=true
 PROTECTIVE_ORDERS_ENABLED=true
 SCANNER_ENABLED=true
-SCANNER_SYMBOLS=BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT,XRPUSDT,ADAUSDT,DOGEUSDT,AVAXUSDT,LINKUSDT,LTCUSDT,DOTUSDT,TRXUSDT
-SCANNER_TIMEFRAME=15m
-SCANNER_INTERVAL_SECONDS=60
+SCANNER_SYMBOLS=BTCUSDT,ETHUSDT
+SCANNER_TIMEFRAME=1h
+SCANNER_INTERVAL_SECONDS=300
 SCANNER_LOOKBACK=300
 SCANNER_USE_CLOSED_CANDLE=true
 SCANNER_RISK_REWARD=2
@@ -84,6 +84,9 @@ SCANNER_MIN_RISK_REWARD=1.5
 SCANNER_ATR_LENGTH=14
 SCANNER_ATR_STOP_MULT=1.5
 SCANNER_PULLBACK_ATR_MULT=0.35
+SCANNER_MIN_EMA_SEPARATION_ATR=0.12
+SCANNER_MIN_EMA200_SLOPE_ATR=0.03
+SCANNER_MAX_STOP_PCT=2
 ```
 
 ## Render
@@ -138,23 +141,28 @@ Mi configuracion sugerida para demo:
 ```env
 BOT_MODE=demo
 TRADE_ENABLED=true
-RISK_PER_TRADE_PCT=0.5
-MAX_OPEN_TRADES=3
-MAX_DAILY_TRADES=6
+RISK_PER_TRADE_PCT=0.10
+MAX_OPEN_TRADES=1
+MAX_DAILY_TRADES=2
 MAX_DAILY_LOSS_PCT=3
 ```
 
-Para una version mas activa pero prudente, usa:
+Para esta version conservadora enfocada en mejores entradas:
 
 ```env
-SCANNER_TIMEFRAME=15m
-SCANNER_INTERVAL_SECONDS=60
-RISK_PER_TRADE_PCT=0.25
-TRADE_COOLDOWN_MINUTES=120
+ALLOWED_SYMBOLS=BTCUSDT,ETHUSDT
+SCANNER_SYMBOLS=BTCUSDT,ETHUSDT
+SCANNER_TIMEFRAME=1h
+SCANNER_INTERVAL_SECONDS=300
+RISK_PER_TRADE_PCT=0.10
+TRADE_COOLDOWN_MINUTES=240
 BLOCK_SYMBOL_WHEN_POSITION_OPEN=true
 LONG_ONLY=false
 EXECUTION_MARKET=futures
 FUTURES_LEVERAGE=1
+SCANNER_MIN_EMA_SEPARATION_ATR=0.12
+SCANNER_MIN_EMA200_SLOPE_ATR=0.03
+SCANNER_MAX_STOP_PCT=2
 ```
 
 Las senales `BUY` abren largos y las senales `SELL` abren shorts en Futures. En Spot una venta no es short; por eso el bot bloquea `SELL` si `EXECUTION_MARKET` no es `futures`.
@@ -179,7 +187,7 @@ BINANCE_API_KEY=tu_key_testnet
 BINANCE_API_SECRET=tu_secret_testnet
 ```
 
-Con esto el bot puede abrir mas de una operacion, pero mantiene un techo razonable: maximo 3 abiertas al mismo tiempo y 6 intentos por dia. Ademas, `BLOCK_SYMBOL_WHEN_POSITION_OPEN=true` evita que el bot siga agregando entradas en un simbolo que ya tiene posicion abierta, y `TRADE_COOLDOWN_MINUTES=120` obliga a esperar 2 horas antes de volver a operar el mismo simbolo. Si el rendimiento en demo es estable durante varias semanas, se puede subir gradualmente. No recomiendo empezar con 15 o 30 trades diarios porque una mala condicion de mercado puede llenar la cuenta de entradas mediocres.
+Con esto el bot opera menos, pero con filtros mas exigentes: maximo 1 posicion abierta, 2 intentos por dia, solo BTC/ETH, timeframe 1h, medias EMA completamente alineadas, separacion minima entre EMAs para evitar lateralidad y stop maximo de 2% del precio. `BLOCK_SYMBOL_WHEN_POSITION_OPEN=true` evita que el bot siga agregando entradas en un simbolo que ya tiene posicion abierta, y `TRADE_COOLDOWN_MINUTES=240` obliga a esperar 4 horas antes de volver a operar el mismo simbolo. Si el rendimiento en demo es estable durante varias semanas, se puede subir gradualmente.
 
 Para live, ademas de cambiar claves reales:
 

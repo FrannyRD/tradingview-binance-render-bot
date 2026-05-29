@@ -196,7 +196,10 @@ async function loadStatus() {
     ['Perdida diaria', `${data.config.maxDailyLossPct}%`],
     ['Solo long', data.config.longOnly ? 'si' : 'no'],
     ['Timeframe', data.config.scannerTimeframe],
-    ['Vela cerrada', data.config.scannerUseClosedCandle ? 'si' : 'no']
+    ['Vela cerrada', data.config.scannerUseClosedCandle ? 'si' : 'no'],
+    ['Separacion EMA/ATR', data.config.scannerMinEmaSeparationAtr],
+    ['Pendiente EMA200/ATR', data.config.scannerMinEma200SlopeAtr],
+    ['Stop maximo', `${data.config.scannerMaxStopPct}%`]
   ]);
 
   renderKeyValue('config', [

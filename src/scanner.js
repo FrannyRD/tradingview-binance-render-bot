@@ -67,7 +67,10 @@ export class MarketScanner {
       atrLength: this.config.scannerAtrLength,
       atrStopMult: this.config.scannerAtrStopMult,
       minRiskReward: this.config.scannerMinRiskReward,
-      pullbackAtrMult: this.config.scannerPullbackAtrMult
+      pullbackAtrMult: this.config.scannerPullbackAtrMult,
+      minEmaSeparationAtr: this.config.scannerMinEmaSeparationAtr,
+      minEma200SlopeAtr: this.config.scannerMinEma200SlopeAtr,
+      maxStopPct: this.config.scannerMaxStopPct
     });
 
     if (!signal) {

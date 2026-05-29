@@ -67,7 +67,10 @@ export function buildEmaPullbackSignal(candles, options) {
     atrLength = 14,
     atrStopMult = 1.5,
     minRiskReward = 1.5,
-    pullbackAtrMult = 0.35
+    pullbackAtrMult = 0.35,
+    minEmaSeparationAtr = 0.12,
+    minEma200SlopeAtr = 0.03,
+    maxStopPct = 2
   } = options;
 
   if (candles.length < 220) return null;
@@ -79,18 +82,24 @@ export function buildEmaPullbackSignal(candles, options) {
   const atrValues = atr(candles, atrLength);
   const i = candles.length - 1;
   const candle = candles[i];
+  const slopeBars = 10;
 
   if (!ema20[i] || !ema50[i] || !ema200[i] || !atrValues[i]) return null;
+  if (!ema200[i - slopeBars]) return null;
 
   const atrNow = atrValues[i];
   const nearEma20 = Math.abs(candle.close - ema20[i]) <= atrNow * pullbackAtrMult || candle.low <= ema20[i] || candle.high >= ema20[i];
   const nearEma50 = Math.abs(candle.close - ema50[i]) <= atrNow * pullbackAtrMult || candle.low <= ema50[i] || candle.high >= ema50[i];
+  const ema20To50Atr = Math.abs(ema20[i] - ema50[i]) / atrNow;
+  const ema50To200Atr = Math.abs(ema50[i] - ema200[i]) / atrNow;
+  const emaSeparated = ema20To50Atr >= minEmaSeparationAtr && ema50To200Atr >= minEmaSeparationAtr;
+  const ema200SlopeAtr = (ema200[i] - ema200[i - slopeBars]) / atrNow;
 
-  const trendUp = candle.close > ema200[i] && ema20[i] > ema50[i];
+  const trendUp = candle.close > ema20[i] && ema20[i] > ema50[i] && ema50[i] > ema200[i] && emaSeparated && ema200SlopeAtr >= minEma200SlopeAtr;
   const pullbackLong = nearEma20 || nearEma50;
   const bullishRejection = candle.close > candle.open && (candle.close - candle.low) > (candle.high - candle.close);
 
-  const trendDown = candle.close < ema200[i] && ema20[i] < ema50[i];
+  const trendDown = candle.close < ema20[i] && ema20[i] < ema50[i] && ema50[i] < ema200[i] && emaSeparated && ema200SlopeAtr <= -minEma200SlopeAtr;
   const pullbackShort = nearEma20 || nearEma50;
   const bearishRejection = candle.close < candle.open && (candle.high - candle.close) > (candle.close - candle.low);
 
@@ -116,8 +125,9 @@ export function buildEmaPullbackSignal(candles, options) {
   const risk = Math.abs(candle.close - stopLoss);
   const reward = Math.abs(takeProfit - candle.close);
   const rewardRisk = reward / risk;
+  const stopPct = (risk / candle.close) * 100;
 
-  if (!Number.isFinite(stopLoss) || !Number.isFinite(takeProfit) || rewardRisk < minRiskReward) {
+  if (!Number.isFinite(stopLoss) || !Number.isFinite(takeProfit) || rewardRisk < minRiskReward || stopPct > maxStopPct) {
     return null;
   }
 

@@ -37,7 +37,7 @@ function listFromEnv(value) {
     .filter(Boolean);
 }
 
-const defaultSymbols = 'BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT,XRPUSDT,ADAUSDT,DOGEUSDT,AVAXUSDT,LINKUSDT,LTCUSDT,DOTUSDT,TRXUSDT';
+const defaultSymbols = 'BTCUSDT,ETHUSDT';
 
 export function loadConfig(env = process.env) {
   const mode = (env.BOT_MODE || 'dry-run').toLowerCase();
@@ -59,11 +59,11 @@ export function loadConfig(env = process.env) {
     binanceApiSecret: env.BINANCE_API_SECRET || '',
     executionMarket: (env.EXECUTION_MARKET || 'futures').toLowerCase(),
     futuresLeverage: numberFromEnv(env, 'FUTURES_LEVERAGE', 1),
-    riskPerTradePct: numberFromEnv(env, 'RISK_PER_TRADE_PCT', 0.25),
+    riskPerTradePct: numberFromEnv(env, 'RISK_PER_TRADE_PCT', 0.1),
     maxDailyLossPct: numberFromEnv(env, 'MAX_DAILY_LOSS_PCT', 3),
-    maxOpenTrades: numberFromEnv(env, 'MAX_OPEN_TRADES', 3),
-    maxDailyTrades: numberFromEnv(env, 'MAX_DAILY_TRADES', 6),
-    tradeCooldownMinutes: numberFromEnv(env, 'TRADE_COOLDOWN_MINUTES', 120),
+    maxOpenTrades: numberFromEnv(env, 'MAX_OPEN_TRADES', 1),
+    maxDailyTrades: numberFromEnv(env, 'MAX_DAILY_TRADES', 2),
+    tradeCooldownMinutes: numberFromEnv(env, 'TRADE_COOLDOWN_MINUTES', 240),
     blockSymbolWhenPositionOpen: boolFromEnv(env.BLOCK_SYMBOL_WHEN_POSITION_OPEN, true),
     startingEquityUsdt: numberFromEnv(env, 'STARTING_EQUITY_USDT', 1000),
     allowedSymbols: listFromEnv(env.ALLOWED_SYMBOLS || defaultSymbols),
@@ -72,8 +72,8 @@ export function loadConfig(env = process.env) {
     protectiveOrdersEnabled: boolFromEnv(env.PROTECTIVE_ORDERS_ENABLED, true),
     scannerEnabled: boolFromEnv(env.SCANNER_ENABLED, true),
     scannerSymbols: listFromEnv(env.SCANNER_SYMBOLS || env.ALLOWED_SYMBOLS || defaultSymbols),
-    scannerTimeframe: env.SCANNER_TIMEFRAME || '15m',
-    scannerIntervalSeconds: numberFromEnv(env, 'SCANNER_INTERVAL_SECONDS', 60),
+    scannerTimeframe: env.SCANNER_TIMEFRAME || '1h',
+    scannerIntervalSeconds: numberFromEnv(env, 'SCANNER_INTERVAL_SECONDS', 300),
     scannerLookback: numberFromEnv(env, 'SCANNER_LOOKBACK', 300),
     scannerUseClosedCandle: boolFromEnv(env.SCANNER_USE_CLOSED_CANDLE, true),
     scannerRiskReward: numberFromEnv(env, 'SCANNER_RISK_REWARD', 2),
@@ -81,6 +81,9 @@ export function loadConfig(env = process.env) {
     scannerAtrLength: numberFromEnv(env, 'SCANNER_ATR_LENGTH', 14),
     scannerAtrStopMult: numberFromEnv(env, 'SCANNER_ATR_STOP_MULT', 1.5),
     scannerPullbackAtrMult: numberFromEnv(env, 'SCANNER_PULLBACK_ATR_MULT', 0.35),
+    scannerMinEmaSeparationAtr: numberFromEnv(env, 'SCANNER_MIN_EMA_SEPARATION_ATR', 0.12),
+    scannerMinEma200SlopeAtr: numberFromEnv(env, 'SCANNER_MIN_EMA200_SLOPE_ATR', 0.03),
+    scannerMaxStopPct: numberFromEnv(env, 'SCANNER_MAX_STOP_PCT', 2),
     dataDir: path.resolve(env.DATA_DIR || './data')
   };
 }

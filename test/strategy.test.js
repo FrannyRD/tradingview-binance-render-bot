@@ -28,7 +28,8 @@ test('detecta una senal pullback en tendencia alcista', () => {
   const signal = buildEmaPullbackSignal(candles, {
     symbol: 'BTCUSDT',
     interval: '1h',
-    riskReward: 2
+    riskReward: 2,
+    maxStopPct: 20
   });
 
   assert.equal(signal.action, 'BUY');
@@ -59,11 +60,33 @@ test('detecta una senal short en tendencia bajista', () => {
   const signal = buildEmaPullbackSignal(candles, {
     symbol: 'BTCUSDT',
     interval: '15m',
-    riskReward: 2
+    riskReward: 2,
+    maxStopPct: 20
   });
 
   assert.equal(signal.action, 'SELL');
   assert.equal(signal.symbol, 'BTCUSDT');
   assert.ok(signal.stopLoss > signal.price);
   assert.ok(signal.takeProfit < signal.price);
+});
+
+test('rechaza mercado lateral sin separacion entre EMAs', () => {
+  const candles = Array.from({ length: 230 }, (_, index) => {
+    const close = 100 + Math.sin(index / 3) * 0.5;
+    return {
+      openTime: index * 60_000,
+      open: close - 0.1,
+      high: close + 0.2,
+      low: close - 0.2,
+      close,
+      volume: 100,
+      closeTime: index * 60_000 + 59_999
+    };
+  });
+
+  assert.equal(buildEmaPullbackSignal(candles, {
+    symbol: 'BTCUSDT',
+    interval: '1h',
+    riskReward: 2
+  }), null);
 });

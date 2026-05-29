@@ -77,7 +77,10 @@ const server = http.createServer(async (req, res) => {
           scannerSymbols: config.scannerSymbols,
           scannerTimeframe: config.scannerTimeframe,
           scannerIntervalSeconds: config.scannerIntervalSeconds,
-          scannerUseClosedCandle: config.scannerUseClosedCandle
+          scannerUseClosedCandle: config.scannerUseClosedCandle,
+          scannerMinEmaSeparationAtr: config.scannerMinEmaSeparationAtr,
+          scannerMinEma200SlopeAtr: config.scannerMinEma200SlopeAtr,
+          scannerMaxStopPct: config.scannerMaxStopPct
         },
         state,
         events,
