@@ -34,15 +34,17 @@ export class BinanceClient {
   async request(method, endpoint, params = {}, signed = false) {
     if (signed) this.ensureReady();
     const query = new URLSearchParams();
+
     for (const [key, value] of Object.entries(params)) {
-      if (value !== undefined && value !== null && value !== '') query.set(key, String(value));
+      if (value !== undefined && value !== null && value !== '') {
+        query.set(key, String(value));
+      }
     }
 
     if (signed) {
       query.set('timestamp', String(Date.now()));
       query.set('recvWindow', '5000');
-      const signature = this.sign(query.toString());
-      query.set('signature', signature);
+      query.set('signature', this.sign(query.toString()));
     }
 
     const qs = query.toString();
@@ -58,9 +60,11 @@ export class BinanceClient {
 
     const text = await response.text();
     const data = text ? JSON.parse(text) : {};
+
     if (!response.ok) {
       throw new Error(`Binance ${response.status}: ${JSON.stringify(data)}`);
     }
+
     return data;
   }
 
@@ -83,8 +87,11 @@ export class BinanceClient {
     const data = await this.request('GET', '/api/v3/exchangeInfo', { symbol }, false);
     const info = data.symbols?.[0];
     const lot = info?.filters?.find((filter) => filter.filterType === 'LOT_SIZE');
-    const minNotional = info?.filters?.find((filter) => filter.filterType === 'MIN_NOTIONAL' || filter.filterType === 'NOTIONAL');
+    const minNotional = info?.filters?.find(
+      (filter) => filter.filterType === 'MIN_NOTIONAL' || filter.filterType === 'NOTIONAL'
+    );
     const priceFilter = info?.filters?.find((filter) => filter.filterType === 'PRICE_FILTER');
+
     return {
       stepSize: lot?.stepSize || '0.000001',
       minQty: lot?.minQty || '0',
@@ -145,6 +152,7 @@ export class BinanceFuturesClient extends BinanceClient {
     const lot = info?.filters?.find((filter) => filter.filterType === 'LOT_SIZE');
     const minNotional = info?.filters?.find((filter) => filter.filterType === 'MIN_NOTIONAL');
     const priceFilter = info?.filters?.find((filter) => filter.filterType === 'PRICE_FILTER');
+
     return {
       stepSize: lot?.stepSize || '0.001',
       minQty: lot?.minQty || '0',
@@ -169,25 +177,25 @@ export class BinanceFuturesClient extends BinanceClient {
 
   async placeProtection(signal, plan, filters) {
     const closeSide = signal.action === 'BUY' ? 'SELL' : 'BUY';
-    const quantity = roundDownToStep(plan.quantity, filters.stepSize);
+
     const stopOrder = await this.request('POST', '/fapi/v1/algoOrder', {
+      algoType: 'CONDITIONAL',
       symbol: signal.symbol,
       side: closeSide,
-      orderType: 'STOP_MARKET',
-      quantity: formatDecimal(quantity),
+      type: 'STOP_MARKET',
       triggerPrice: formatDecimal(roundDownToStep(signal.stopLoss, filters.tickSize)),
-      reduceOnly: 'true',
+      closePosition: 'true',
       workingType: 'MARK_PRICE',
       clientAlgoId: `sl_${Date.now()}`
     }, true);
 
     const takeProfitOrder = await this.request('POST', '/fapi/v1/algoOrder', {
+      algoType: 'CONDITIONAL',
       symbol: signal.symbol,
       side: closeSide,
-      orderType: 'TAKE_PROFIT_MARKET',
-      quantity: formatDecimal(quantity),
+      type: 'TAKE_PROFIT_MARKET',
       triggerPrice: formatDecimal(roundDownToStep(signal.takeProfit, filters.tickSize)),
-      reduceOnly: 'true',
+      closePosition: 'true',
       workingType: 'MARK_PRICE',
       clientAlgoId: `tp_${Date.now()}`
     }, true);
