@@ -70,6 +70,8 @@
       .metric-label { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
       .metric-value { font-size: 24px; font-weight: 800; line-height: 1.1; overflow-wrap: anywhere; }
       .metric-note { color: var(--muted); font-size: 12px; margin-top: 8px; }
+      .value-good { color: var(--good); }
+      .value-bad { color: var(--bad); }
       .panel {
         background: var(--panel);
         border: 1px solid var(--line);
@@ -185,7 +187,17 @@
         <div class="metric">
           <div class="metric-label">Equity USDT</div>
           <div class="metric-value" id="equity">-</div>
-          <div class="metric-note">base para calculo de riesgo</div>
+          <div class="metric-note" id="equityNote">base para calculo de riesgo</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">PnL abierto</div>
+          <div class="metric-value" id="unrealizedPnl">-</div>
+          <div class="metric-note">posiciones abiertas</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">PnL realizado</div>
+          <div class="metric-value" id="realizedPnl">-</div>
+          <div class="metric-note" id="realizedNote">ultimos movimientos</div>
         </div>
         <div class="metric">
           <div class="metric-label">Operaciones abiertas</div>
@@ -226,14 +238,14 @@
 
           <div class="split">
             <div class="panel">
-              <h2>Operaciones Abiertas</h2>
+              <h2>Posiciones Abiertas</h2>
               <table>
                 <thead>
                   <tr>
                     <th>Simbolo</th>
+                    <th>Lado</th>
                     <th>Entrada</th>
-                    <th>SL / TP</th>
-                    <th>Cantidad</th>
+                    <th>PnL</th>
                   </tr>
                 </thead>
                 <tbody id="openTradesTable"></tbody>
@@ -256,6 +268,22 @@
                 </div>
               </div>
             </div>
+          </div>
+
+          <div class="panel">
+            <h2>Ganancias y Costos</h2>
+            <div id="accountSummary"></div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Hora</th>
+                  <th>Simbolo</th>
+                  <th>Tipo</th>
+                  <th>Monto</th>
+                </tr>
+              </thead>
+              <tbody id="incomeTable"></tbody>
+            </table>
           </div>
 
           <div class="panel">

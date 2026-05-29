@@ -8,7 +8,7 @@ Bot de trading Spot para Render y Binance. Puede trabajar sin TradingView: consu
 
 - Scanner automatico de mercado desde Binance
 - Boton manual `Escanear` en el dashboard
-- Dashboard con resumen de salud, ultimo escaneo, simbolos, eventos, riesgo y operaciones abiertas
+- Dashboard con resumen de salud, ultimo escaneo, simbolos, eventos, riesgo, posiciones abiertas y PnL sincronizado desde Binance
 - API `POST /api/scan/run` para disparar una revision
 - Webhook opcional `POST /webhook/tradingview`
 - Dashboard `GET /dashboard`
@@ -33,7 +33,7 @@ Render scanner
   -> evalua EMA 20/50/200 + pullback + vela de rechazo
   -> valida simbolo, stop loss, take profit y riesgo
   -> dry-run, Binance Demo Futures, Binance Testnet o Binance Live
-  -> dashboard con eventos
+  -> dashboard con eventos, posiciones y ganancias/costos de Binance
 ```
 
 ## Instalacion local
@@ -156,6 +156,15 @@ FUTURES_LEVERAGE=1
 Las senales `BUY` abren largos y las senales `SELL` abren shorts en Futures. En Spot una venta no es short; por eso el bot bloquea `SELL` si `EXECUTION_MARKET` no es `futures`.
 
 En Futures, la proteccion usa ordenes condicionales por `/fapi/v1/algoOrder` para stop loss y take profit. Si Binance acepta la entrada pero rechaza la proteccion, el dashboard registra `order.protection_failed`; en ese caso revisa Binance Demo y cierra o protege la posicion manualmente antes de seguir probando.
+
+El dashboard consulta Binance en `/api/status` para mostrar:
+
+- PnL abierto: ganancias o perdidas no realizadas de las posiciones que siguen abiertas.
+- PnL realizado: ganancias o perdidas ya cerradas, tomadas desde el historial `REALIZED_PNL`.
+- Comisiones y funding: costos que Binance registra aparte del precio de entrada/salida.
+- Posiciones abiertas: lado long/short, entrada y PnL actual.
+
+Si ves ordenes en Binance pero el PnL realizado aparece en cero, normalmente significa que la posicion sigue abierta. La ganancia cerrada aparece cuando Binance ejecuta el take profit, stop loss o cuando cierras la posicion manualmente.
 
 Si usas el Spot Testnet oficial de Binance en `testnet.binance.vision`, usa:
 

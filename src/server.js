@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadConfig } from './config.js';
 import { MarketScanner } from './scanner.js';
+import { loadAccountSnapshot } from './portfolio.js';
 import { Store } from './store.js';
 import { handleTradingViewWebhook } from './webhook.js';
 import { jsonResponse, readJsonBody } from './utils.js';
@@ -50,6 +51,13 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/api/status') {
       const state = await store.loadState();
       const events = await store.listEvents(200);
+      let account = null;
+      let accountError = null;
+      try {
+        account = await loadAccountSnapshot({ config });
+      } catch (error) {
+        accountError = error.message;
+      }
       return jsonResponse(res, 200, {
         ok: true,
         config: {
@@ -70,7 +78,9 @@ const server = http.createServer(async (req, res) => {
           scannerUseClosedCandle: config.scannerUseClosedCandle
         },
         state,
-        events
+        events,
+        account,
+        accountError
       });
     }
 

@@ -7,6 +7,19 @@ function money(value, digits = 2) {
   });
 }
 
+function signedMoney(value, digits = 2) {
+  const amount = Number(value || 0);
+  const sign = amount > 0 ? '+' : '';
+  return `${sign}$${money(amount, digits)}`;
+}
+
+function valueClass(value) {
+  const amount = Number(value || 0);
+  if (amount > 0) return 'value-good';
+  if (amount < 0) return 'value-bad';
+  return '';
+}
+
 function compact(value) {
   if (value === undefined || value === null) return '-';
   if (Array.isArray(value)) return value.join(', ');
@@ -57,14 +70,27 @@ function renderScannerResults(event) {
   `).join('') || '<tr><td colspan="4" class="muted">Sin escaneos todavia.</td></tr>';
 }
 
-function renderOpenTrades(openTrades) {
+function renderOpenTrades(openTrades, account) {
+  const accountPositions = account?.positions || [];
+  if (accountPositions.length) {
+    $('openTradesTable').innerHTML = accountPositions.map((position) => `
+      <tr>
+        <td><code>${position.symbol}</code></td>
+        <td>${badge(position.side, position.side === 'LONG' ? 'good' : 'warn')}</td>
+        <td>${money(position.entryPrice, position.entryPrice > 100 ? 2 : 4)}</td>
+        <td class="${valueClass(position.unrealizedPnlUsdt)}">${signedMoney(position.unrealizedPnlUsdt)}</td>
+      </tr>
+    `).join('');
+    return;
+  }
+
   const active = openTrades.filter((trade) => trade.status === 'open');
   $('openTradesTable').innerHTML = active.map((trade) => `
     <tr>
       <td><code>${trade.symbol}</code></td>
+      <td>${badge(trade.side === 'SELL' ? 'SHORT' : 'LONG', trade.side === 'SELL' ? 'warn' : 'good')}</td>
       <td>${money(trade.entryPrice, trade.entryPrice > 100 ? 2 : 4)}</td>
-      <td>${money(trade.stopLoss, 4)} / ${money(trade.takeProfit, 4)}</td>
-      <td>${money(trade.quantity, 6)}</td>
+      <td class="muted">Binance sincronizando</td>
     </tr>
   `).join('') || '<tr><td colspan="4" class="muted">Sin operaciones abiertas.</td></tr>';
 }
@@ -78,6 +104,44 @@ function renderKeyValue(target, entries) {
   `).join('');
 }
 
+function renderAccountSummary(account, accountError) {
+  if (accountError) {
+    $('accountSummary').innerHTML = `<p class="muted">No pude sincronizar Binance: ${accountError}</p>`;
+    $('incomeTable').innerHTML = '<tr><td colspan="4" class="muted">Sin datos de Binance.</td></tr>';
+    return;
+  }
+
+  if (!account) {
+    $('accountSummary').innerHTML = '<p class="muted">Activa trading con claves API para ver PnL desde Binance.</p>';
+    $('incomeTable').innerHTML = '<tr><td colspan="4" class="muted">Sin datos de Binance.</td></tr>';
+    return;
+  }
+
+  const totals = account.totals || {};
+  renderKeyValue('accountSummary', [
+    ['Balance billetera', `$${money(totals.walletBalanceUsdt)}`],
+    ['Balance margen', `$${money(totals.marginBalanceUsdt)}`],
+    ['Disponible', `$${money(totals.availableBalanceUsdt)}`],
+    ['Margen usado', `$${money(totals.initialMarginUsdt)}`],
+    ['PnL no realizado', `<span class="${valueClass(totals.unrealizedPnlUsdt)}">${signedMoney(totals.unrealizedPnlUsdt)}</span>`],
+    ['PnL realizado', `<span class="${valueClass(totals.realizedPnlUsdt)}">${signedMoney(totals.realizedPnlUsdt)}</span>`],
+    ['Comisiones', `<span class="${valueClass(totals.commissionUsdt)}">${signedMoney(totals.commissionUsdt)}</span>`],
+    ['Funding', `<span class="${valueClass(totals.fundingFeeUsdt)}">${signedMoney(totals.fundingFeeUsdt)}</span>`],
+    ['Neto registrado', `<span class="${valueClass(totals.netIncomeUsdt)}">${signedMoney(totals.netIncomeUsdt)}</span>`],
+    ['Sincronizado', account.syncedAt ? new Date(account.syncedAt).toLocaleString() : '-']
+  ]);
+
+  const incomeRows = account.income?.recent || [];
+  $('incomeTable').innerHTML = incomeRows.map((row) => `
+    <tr>
+      <td>${row.time ? new Date(row.time).toLocaleString() : '-'}</td>
+      <td><code>${row.symbol}</code></td>
+      <td><code>${row.incomeType}</code></td>
+      <td class="${valueClass(row.income)}">${signedMoney(row.income, 6)} ${row.asset || 'USDT'}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="4" class="muted">Aun no hay ganancias cerradas. El PnL realizado aparece cuando una posicion se cierra.</td></tr>';
+}
+
 async function loadStatus() {
   const response = await fetch('/api/status');
   const data = await response.json();
@@ -85,6 +149,8 @@ async function loadStatus() {
 
   const events = data.events || [];
   const openTrades = data.state.openTrades || [];
+  const account = data.account;
+  const totals = account?.totals || {};
   const latestScan = latestEvent(events, 'scanner.completed');
   const acceptedSignals = countEvents(events, 'signal.accepted');
   const rejectedSignals = countEvents(events, 'signal.rejected');
@@ -96,8 +162,14 @@ async function loadStatus() {
   $('modeNote').textContent = data.config.mode === 'dry-run' ? 'simulacion sin ordenes' : data.config.mode;
   $('tradeEnabled').innerHTML = data.config.tradeEnabled ? badge('activo', 'good') : badge('apagado', 'warn');
   $('riskNote').textContent = `${data.config.riskPerTradePct}% por trade`;
-  $('equity').textContent = `$${money(data.state.equityUsdt)}`;
-  $('openTrades').textContent = openTrades.filter((trade) => trade.status === 'open').length;
+  $('equity').textContent = `$${money(totals.marginBalanceUsdt ?? data.state.equityUsdt)}`;
+  $('equityNote').textContent = account ? `${account.market} sincronizado` : 'base para calculo de riesgo';
+  $('unrealizedPnl').textContent = signedMoney(totals.unrealizedPnlUsdt);
+  $('unrealizedPnl').className = `metric-value ${valueClass(totals.unrealizedPnlUsdt)}`;
+  $('realizedPnl').textContent = signedMoney(totals.realizedPnlUsdt);
+  $('realizedPnl').className = `metric-value ${valueClass(totals.realizedPnlUsdt)}`;
+  $('realizedNote').textContent = account?.income?.incomeError ? 'income parcial' : 'ultimos movimientos';
+  $('openTrades').textContent = account?.positions?.length ?? openTrades.filter((trade) => trade.status === 'open').length;
   $('openTradesLimit').textContent = `max ${data.config.maxOpenTrades} abiertas`;
   $('scanner').innerHTML = data.config.scannerEnabled ? badge('activo', 'good') : badge('apagado', 'warn');
   $('scannerNote').textContent = `${data.config.scannerTimeframe} cada ${data.config.scannerIntervalSeconds}s`;
@@ -110,7 +182,8 @@ async function loadStatus() {
   $('symbols').innerHTML = data.config.scannerSymbols.map((symbol) => `<span class="badge">${symbol}</span>`).join('');
 
   renderScannerResults(latestScan);
-  renderOpenTrades(openTrades);
+  renderOpenTrades(openTrades, account);
+  renderAccountSummary(account, data.accountError);
 
   renderKeyValue('riskConfig', [
     ['Riesgo por trade', `${data.config.riskPerTradePct}%`],
