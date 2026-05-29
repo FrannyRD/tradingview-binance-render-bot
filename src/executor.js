@@ -56,23 +56,30 @@ export async function executeSignal({ signal, config, store, source = 'unknown' 
 
   const order = await binance.placeMarketOrder(signal, plan);
   let protection = null;
+  let protectionError = null;
   if (config.protectiveOrdersEnabled) {
-    protection = config.executionMarket === 'futures'
-      ? await binance.placeProtection(signal, filters)
-      : await binance.placeOcoProtection(signal, plan, filters);
+    try {
+      protection = config.executionMarket === 'futures'
+        ? await binance.placeProtection(signal, plan, filters)
+        : await binance.placeOcoProtection(signal, plan, filters);
+    } catch (error) {
+      protectionError = error.message;
+      await store.appendEvent({ type: 'order.protection_failed', signal, order, plan, error: protectionError });
+    }
   }
 
-  await store.recordOrder(signal, { ...order, protection }, plan);
+  await store.recordOrder(signal, { ...order, protection, protectionError }, plan);
   return {
-    statusCode: 201,
+    statusCode: protectionError ? 207 : 201,
     body: {
-      ok: true,
+      ok: !protectionError,
       result: {
         mode: config.mode,
         source,
         executed: true,
         order,
         protection,
+        protectionError,
         plan
       }
     }

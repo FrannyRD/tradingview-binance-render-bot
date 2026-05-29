@@ -167,26 +167,29 @@ export class BinanceFuturesClient extends BinanceClient {
     }, true);
   }
 
-  async placeProtection(signal, filters) {
+  async placeProtection(signal, plan, filters) {
     const closeSide = signal.action === 'BUY' ? 'SELL' : 'BUY';
-    const stopOrder = await this.request('POST', '/fapi/v1/order', {
+    const quantity = roundDownToStep(plan.quantity, filters.stepSize);
+    const stopOrder = await this.request('POST', '/fapi/v1/algoOrder', {
       symbol: signal.symbol,
       side: closeSide,
-      type: 'STOP_MARKET',
-      stopPrice: formatDecimal(roundDownToStep(signal.stopLoss, filters.tickSize)),
-      closePosition: 'true',
+      orderType: 'STOP_MARKET',
+      quantity: formatDecimal(quantity),
+      triggerPrice: formatDecimal(roundDownToStep(signal.stopLoss, filters.tickSize)),
+      reduceOnly: 'true',
       workingType: 'MARK_PRICE',
-      newClientOrderId: `sl_${Date.now()}`
+      clientAlgoId: `sl_${Date.now()}`
     }, true);
 
-    const takeProfitOrder = await this.request('POST', '/fapi/v1/order', {
+    const takeProfitOrder = await this.request('POST', '/fapi/v1/algoOrder', {
       symbol: signal.symbol,
       side: closeSide,
-      type: 'TAKE_PROFIT_MARKET',
-      stopPrice: formatDecimal(roundDownToStep(signal.takeProfit, filters.tickSize)),
-      closePosition: 'true',
+      orderType: 'TAKE_PROFIT_MARKET',
+      quantity: formatDecimal(quantity),
+      triggerPrice: formatDecimal(roundDownToStep(signal.takeProfit, filters.tickSize)),
+      reduceOnly: 'true',
       workingType: 'MARK_PRICE',
-      newClientOrderId: `tp_${Date.now()}`
+      clientAlgoId: `tp_${Date.now()}`
     }, true);
 
     return { stopOrder, takeProfitOrder };

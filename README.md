@@ -155,6 +155,8 @@ FUTURES_LEVERAGE=1
 
 Las senales `BUY` abren largos y las senales `SELL` abren shorts en Futures. En Spot una venta no es short; por eso el bot bloquea `SELL` si `EXECUTION_MARKET` no es `futures`.
 
+En Futures, la proteccion usa ordenes condicionales por `/fapi/v1/algoOrder` para stop loss y take profit. Si Binance acepta la entrada pero rechaza la proteccion, el dashboard registra `order.protection_failed`; en ese caso revisa Binance Demo y cierra o protege la posicion manualmente antes de seguir probando.
+
 Si usas el Spot Testnet oficial de Binance en `testnet.binance.vision`, usa:
 
 ```env

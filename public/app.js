@@ -40,6 +40,7 @@ function eventDetail(event) {
   }
   if (event.type === 'signal.rejected') return event.reason || 'Rechazada';
   if (event.type === 'order.created') return `${event.signal?.symbol || '-'} orden creada`;
+  if (event.type === 'order.protection_failed') return event.error || 'Proteccion fallida';
   return compact(event.signal || event.result || event.order || event.results || {});
 }
 
