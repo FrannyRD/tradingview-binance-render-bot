@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { calculateTradePlan, checkCircuitBreakers, checkSymbolCooldown, normalizeSignal, validateSignal } from '../src/risk.js';
+import { decimalPlacesFromStep, formatToStep } from '../src/utils.js';
 
 const config = {
   allowedSymbols: ['BTCUSDT'],
@@ -85,4 +86,11 @@ test('bloquea si el simbolo esta en cooldown', () => {
     checkSymbolCooldown({ state, config: { tradeCooldownMinutes: 120 }, symbol: 'BTCUSDT' }),
     /Cooldown activo/
   );
+});
+
+test('formatea valores usando la precision del step de Binance', () => {
+  assert.equal(decimalPlacesFromStep('1.00000000'), 0);
+  assert.equal(decimalPlacesFromStep('0.00100000'), 3);
+  assert.equal(formatToStep(123.456789, '0.01000000'), '123.45');
+  assert.equal(formatToStep(9.999, '1.00000000'), '9');
 });

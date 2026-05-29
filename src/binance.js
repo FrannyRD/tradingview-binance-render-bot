@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { formatDecimal, roundDownToStep, safeNumber } from './utils.js';
+import { formatToStep, roundDownToStep, safeNumber } from './utils.js';
 
 const BASE_URLS = {
   testnet: 'https://testnet.binance.vision',
@@ -83,13 +83,16 @@ export class BinanceClient {
     const data = await this.request('GET', '/api/v3/exchangeInfo', { symbol }, false);
     const info = data.symbols?.[0];
     const lot = info?.filters?.find((filter) => filter.filterType === 'LOT_SIZE');
+    const marketLot = info?.filters?.find((filter) => filter.filterType === 'MARKET_LOT_SIZE');
     const minNotional = info?.filters?.find((filter) => filter.filterType === 'MIN_NOTIONAL' || filter.filterType === 'NOTIONAL');
     const priceFilter = info?.filters?.find((filter) => filter.filterType === 'PRICE_FILTER');
     return {
-      stepSize: lot?.stepSize || '0.000001',
-      minQty: lot?.minQty || '0',
+      stepSize: marketLot?.stepSize || lot?.stepSize || '0.000001',
+      minQty: marketLot?.minQty || lot?.minQty || '0',
       minNotional: minNotional?.minNotional || '0',
-      tickSize: priceFilter?.tickSize || '0.01'
+      tickSize: priceFilter?.tickSize || '0.01',
+      quantityPrecision: info?.quantityPrecision,
+      pricePrecision: info?.pricePrecision
     };
   }
 
@@ -98,7 +101,7 @@ export class BinanceClient {
       symbol: signal.symbol,
       side: signal.action,
       type: 'MARKET',
-      quantity: formatDecimal(plan.quantity),
+      quantity: formatToStep(plan.quantity, plan.filters?.stepSize || '0.000001'),
       newClientOrderId: `tv_${Date.now()}`
     }, true);
   }
@@ -114,12 +117,12 @@ export class BinanceClient {
     return this.request('POST', '/api/v3/orderList/oco', {
       symbol: signal.symbol,
       side: 'SELL',
-      quantity: formatDecimal(quantity),
+      quantity: formatToStep(quantity, filters.stepSize),
       aboveType: 'LIMIT_MAKER',
-      abovePrice: formatDecimal(roundDownToStep(signal.takeProfit, filters.tickSize)),
+      abovePrice: formatToStep(signal.takeProfit, filters.tickSize),
       belowType: 'STOP_LOSS_LIMIT',
-      belowStopPrice: formatDecimal(roundDownToStep(signal.stopLoss, filters.tickSize)),
-      belowPrice: formatDecimal(stopLimitPrice),
+      belowStopPrice: formatToStep(signal.stopLoss, filters.tickSize),
+      belowPrice: formatToStep(stopLimitPrice, filters.tickSize),
       belowTimeInForce: 'GTC',
       listClientOrderId: `oco_${Date.now()}`
     }, true);
@@ -159,13 +162,16 @@ export class BinanceFuturesClient extends BinanceClient {
     const data = await this.request('GET', '/fapi/v1/exchangeInfo', { symbol }, false);
     const info = data.symbols?.[0];
     const lot = info?.filters?.find((filter) => filter.filterType === 'LOT_SIZE');
+    const marketLot = info?.filters?.find((filter) => filter.filterType === 'MARKET_LOT_SIZE');
     const minNotional = info?.filters?.find((filter) => filter.filterType === 'MIN_NOTIONAL');
     const priceFilter = info?.filters?.find((filter) => filter.filterType === 'PRICE_FILTER');
     return {
-      stepSize: lot?.stepSize || '0.001',
-      minQty: lot?.minQty || '0',
+      stepSize: marketLot?.stepSize || lot?.stepSize || '0.001',
+      minQty: marketLot?.minQty || lot?.minQty || '0',
       minNotional: minNotional?.notional || minNotional?.minNotional || '0',
-      tickSize: priceFilter?.tickSize || '0.01'
+      tickSize: priceFilter?.tickSize || '0.01',
+      quantityPrecision: info?.quantityPrecision,
+      pricePrecision: info?.pricePrecision
     };
   }
 
@@ -178,7 +184,7 @@ export class BinanceFuturesClient extends BinanceClient {
       symbol: signal.symbol,
       side: signal.action,
       type: 'MARKET',
-      quantity: formatDecimal(plan.quantity),
+      quantity: formatToStep(plan.quantity, plan.filters?.stepSize || '0.001'),
       newClientOrderId: `ft_${Date.now()}`
     }, true);
   }
@@ -190,7 +196,7 @@ export class BinanceFuturesClient extends BinanceClient {
       symbol: signal.symbol,
       side: closeSide,
       type: 'STOP_MARKET',
-      triggerPrice: formatDecimal(roundDownToStep(signal.stopLoss, filters.tickSize)),
+      triggerPrice: formatToStep(signal.stopLoss, filters.tickSize),
       closePosition: 'true',
       workingType: 'MARK_PRICE',
       clientAlgoId: `sl_${Date.now()}`
@@ -201,7 +207,7 @@ export class BinanceFuturesClient extends BinanceClient {
       symbol: signal.symbol,
       side: closeSide,
       type: 'TAKE_PROFIT_MARKET',
-      triggerPrice: formatDecimal(roundDownToStep(signal.takeProfit, filters.tickSize)),
+      triggerPrice: formatToStep(signal.takeProfit, filters.tickSize),
       closePosition: 'true',
       workingType: 'MARK_PRICE',
       clientAlgoId: `tp_${Date.now()}`

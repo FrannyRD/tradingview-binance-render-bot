@@ -75,7 +75,11 @@ export function calculateTradePlan({ signal, equityUsdt, config, filters = {} })
     rewardPerUnit,
     riskReward,
     quantity,
-    notionalUsdt
+    notionalUsdt,
+    filters: {
+      stepSize: filters.stepSize || '0.000001',
+      tickSize: filters.tickSize || '0.01'
+    }
   };
 }
 

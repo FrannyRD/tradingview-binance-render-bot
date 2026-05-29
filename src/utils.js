@@ -44,10 +44,22 @@ export function safeNumber(value, fallback = 0) {
 export function roundDownToStep(value, stepSize) {
   const step = Number(stepSize);
   if (!Number.isFinite(step) || step <= 0) return value;
-  const precision = Math.max(0, String(step).split('.')[1]?.length || 0);
+  const precision = decimalPlacesFromStep(stepSize);
   return Number((Math.floor(Number(value) / step) * step).toFixed(precision));
 }
 
 export function formatDecimal(value) {
   return Number(value).toFixed(12).replace(/\.?0+$/, '');
+}
+
+export function decimalPlacesFromStep(stepSize) {
+  const raw = String(stepSize || '');
+  if (raw.includes('e-')) return Number(raw.split('e-')[1]);
+  if (!raw.includes('.')) return 0;
+  return raw.split('.')[1].replace(/0+$/, '').length;
+}
+
+export function formatToStep(value, stepSize) {
+  const precision = decimalPlacesFromStep(stepSize);
+  return roundDownToStep(value, stepSize).toFixed(precision);
 }
